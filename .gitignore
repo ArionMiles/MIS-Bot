@@ -56,3 +56,11 @@ docs/_build/
 
 # PyBuilder
 target/
+
+MIS_venv/
+
+MIS/attendance\.json
+
+MIS/Xpath_Attendance\.txt
+
+MIS/MIS/spiders/creds\.ini

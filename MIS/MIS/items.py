@@ -5,10 +5,29 @@
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/items.html
 
-import scrapy
+from scrapy import Item, Field
 
 
-class MisItem(scrapy.Item):
+class LecturesItem(Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    AM = Field()
+    AP = Field()
+    AC = Field()
+    EM = Field()
+    BEE = Field()
+    EVS = Field()
+    Overall = Field()
+    total_lec_conducted=Field()
+    total_lec_attended=Field()
+
+class PracticalsItem(Item):
+	AC_prac = Field()
+	AM_prac = Field()
+	BEE_prac = Field()
+	Workshop = Field()
+	EM_prac = Field()
+	Overall_prac=Field()
+
+#	def __setitem__(self, key, value):
+#		self._values['Overall_prac'] = Overall_prac[30:]

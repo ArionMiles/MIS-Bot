@@ -69,10 +69,10 @@ ITEM_PIPELINES = {
 }
 
 FEED_EXPORTERS = {
- 'json': 'scrapy.contrib.exporter.JsonItemExporter',
+    'json': 'scrapy.contrib.exporter.JsonItemExporter',
 }
 FEED_FORMAT = 'json'
-FEED_URI = "../attendance_output.json"
+FEED_URI = "attendance_output.json"
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html

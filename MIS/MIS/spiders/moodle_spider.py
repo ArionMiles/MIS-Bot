@@ -5,6 +5,7 @@ from scrapy.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.spiders import Rule
 from ..items import LecturesItem, PracticalsItem
 from scrapy.shell import inspect_response
+from scrapy.crawler import CrawlerProcess
 
 CONFIG = ConfigParser.RawConfigParser()
 CONFIG.read('C:/Users/Kanishk/Documents/Projects/MIS Bot/MIS/MIS/spiders/creds.ini')
@@ -41,7 +42,7 @@ xpath = {
     'EM_prac' : '//table[2]/tr[6]/td[4]/text()',
     'EM_prac_red' : '//table[2]/tr[6]/td[4]/font/u/b/text()',
     'Overall_prac': '//label/h2/text()',
-    'Overall_prac_red' : '//label/h2/u/b/text()'
+    'Overall_prac_red' : '//label/h2/b/text()'
 }
 
 class MySpider(InitSpider):
@@ -139,8 +140,8 @@ class MySpider(InitSpider):
         else:
             EM_prac = response.xpath(xpath['EM_prac']).extract()[0].strip()
         
-        if response.xpath(xpath['Overall_prac']).extract()[0].strip() == "":
-            Overall_prac = str(response.xpath(xpath['Overall_prac_red']).extract()).strip()[33:]
+        if response.xpath(xpath['Overall_prac']).extract()[0].strip() == "Overall Practical Attendance:":
+            Overall_prac = response.xpath(xpath['Overall_prac_red']).extract()[0].strip()
         else:
             Overall_prac = str(response.xpath(xpath['Overall_prac']).extract()).strip()[33:]
         

@@ -16,7 +16,7 @@ from MIS.mis_misc_functions import bunk_lecture
 
 # Read settings from config file
 config = ConfigParser.RawConfigParser()
-config.read('C:/Users/Kanishk/Documents/Projects/MIS Bot/MIS/spiders/creds.ini')
+config.read('MIS/spiders/creds.ini')
 TOKEN = config.get('BOT', 'TOKEN')
 #APP_NAME = config.get('BOT', 'APP_NAME')
 #PORT = int(os.environ.get('PORT', '5000'))
@@ -50,7 +50,7 @@ def attendance(bot, update):
     d.addBoth(lambda _: reactor.stop())
     reactor.run(installSignalHandlers=0)
 
-    with open("C:/Users/Kanishk/Documents/Projects/MIS Bot/MIS/attendance_output.json", 'r') as file:
+    with open("attendance_output.json", 'r') as file:
         contents = file.read()
         a_r = json.loads(contents)
         AM = a_r[0]['AM']

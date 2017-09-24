@@ -8,7 +8,7 @@ from scrapy.shell import inspect_response
 from scrapy.crawler import CrawlerProcess
 
 CONFIG = ConfigParser.RawConfigParser()
-CONFIG.read('C:/Users/Kanishk/Documents/Projects/MIS Bot/MIS/spiders/creds.ini')
+CONFIG.read('MIS/spiders/creds.ini')
 USERNAME = CONFIG.get('MIS', 'USERNAME')
 PASSWORD = CONFIG.get('MIS', 'PASSWORD')
 

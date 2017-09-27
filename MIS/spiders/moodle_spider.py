@@ -1,14 +1,12 @@
-import ConfigParser
+import os
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
 from ..items import LecturesItem, PracticalsItem
 from scrapy.shell import inspect_response
 from scrapy.crawler import CrawlerProcess
 
-CONFIG = ConfigParser.RawConfigParser()
-CONFIG.read('MIS/spiders/creds.ini')
-USERNAME = CONFIG.get('MIS', 'USERNAME')
-PASSWORD = CONFIG.get('MIS', 'PASSWORD')
+USERNAME = os.environ['USERNAME']
+PASSWORD = os.environ['PASSWORD']
 
 xpath = {
     #Lectures

@@ -1,6 +1,5 @@
 import logging
 import os
-import ConfigParser
 import json
 import textwrap
 import sys
@@ -15,25 +14,29 @@ from scrapy.utils.log import configure_logging
 from MIS.mis_misc_functions import bunk_lecture
 
 # Read settings from config file
-config = ConfigParser.RawConfigParser()
+'''config = ConfigParser.RawConfigParser()
 config.read('MIS/spiders/creds.ini')
-TOKEN = config.get('BOT', 'TOKEN')
-#APP_NAME = config.get('BOT', 'APP_NAME')
-#PORT = int(os.environ.get('PORT', '5000'))
+TOKEN = config.get('BOT', 'TOKEN')'''
+
+TOKEN = os.environ['TOKEN']
+CHAT_ID = os.environ['CHAT_ID']
+
+APP_NAME = os.environ['APP_NAME']
+PORT = int(os.environ.get('PORT', '5000'))
 updater = Updater(TOKEN)
 
 # Setting Webhook
-#updater.start_webhook(listen="0.0.0.0",
-#                      port=PORT,
-#                      url_path=TOKEN)
-#updater.bot.setWebhook(APP_NAME + TOKEN)
+updater.start_webhook(listen="0.0.0.0",
+                      port=PORT,
+                      url_path=TOKEN)
+updater.bot.setWebhook(APP_NAME + TOKEN)
 
 logging.basicConfig(format='%(asctime)s -# %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
 
 dispatcher = updater.dispatcher
 
 def start(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="Hi! I'm a telegram Bot for MIS")
+    bot.sendMessage(chat_id=CHAT_ID, text="Hi! I'm a telegram Bot for MIS")
 
 def attendance(bot, update):
     #Empty the previous report contents

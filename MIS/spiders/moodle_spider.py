@@ -1,8 +1,6 @@
 import ConfigParser
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
-from scrapy.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.spiders import Rule
 from ..items import LecturesItem, PracticalsItem
 from scrapy.shell import inspect_response
 from scrapy.crawler import CrawlerProcess

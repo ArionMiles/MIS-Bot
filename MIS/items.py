@@ -28,6 +28,3 @@ class PracticalsItem(Item):
 	Workshop = Field()
 	EM_prac = Field()
 	Overall_prac=Field()
-
-#	def __setitem__(self, key, value):
-#		self._values['Overall_prac'] = Overall_prac[30:]

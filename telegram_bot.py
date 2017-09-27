@@ -117,7 +117,7 @@ def unknown(bot, update):
 # Handlers
 start_handler = CommandHandler('start', start)
 attendance_handler = CommandHandler('attendance', attendance)
-args_handler = CommandHandler('bunk', bunk_lec, pass_args=True)
+args_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
 unknown_handler = MessageHandler(Filters.command, unknown)
 unknown_message = MessageHandler(Filters.text, unknown)
 

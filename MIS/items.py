@@ -24,6 +24,7 @@ class LecturesItem(Item):
 class PracticalsItem(Item):
 	AC_prac = Field()
 	AM_prac = Field()
+    AP_prac = Field()
 	BEE_prac = Field()
 	Workshop = Field()
 	EM_prac = Field()

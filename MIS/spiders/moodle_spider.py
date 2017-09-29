@@ -31,12 +31,14 @@ xpath = {
     'AC_prac_red' : '//table[2]/tr[2]/td[4]/font/u/b/text()',
     'AM_prac' : '//table[2]/tr[3]/td[4]/text()',
     'AM_prac_red': '//table[2]/tr[3]/td[4]/font/u/b/text()',
-    'BEE_prac': '//table[2]/tr[4]/td[4]/text()',
-    'BEE_prac_red': '//table[2]/tr[4]/td[4]/font/u/b/text()',
-    'Workshop': '//table[2]/tr[5]/td[4]/text()',
-    'Workshop_red': '//table[2]/tr[5]/td[4]/font/u/b/text()',
-    'EM_prac' : '//table[2]/tr[6]/td[4]/text()',
-    'EM_prac_red' : '//table[2]/tr[6]/td[4]/font/u/b/text()',
+    'AP_prac' : '//table[2]/tr[4]/td[4]/text()',
+    'AP_prac_red' : '//table[2]/tr[4]/td[4]/font/u/b/text()',
+    'BEE_prac': '//table[2]/tr[5]/td[4]/text()',
+    'BEE_prac_red': '//table[2]/tr[5]/td[4]/font/u/b/text()',
+    'Workshop': '//table[2]/tr[6]/td[4]/text()',
+    'Workshop_red': '//table[2]/tr[6]/td[4]/font/u/b/text()',
+    'EM_prac' : '//table[2]/tr[7]/td[4]/text()',
+    'EM_prac_red' : '//table[2]/tr[7]/td[4]/font/u/b/text()',
     'Overall_prac': '//label/h2/text()',
     'Overall_prac_red' : '//label/h2/b/text()'
 }
@@ -121,6 +123,11 @@ class MySpider(InitSpider):
         else:
             AM_prac = response.xpath(xpath['AM_prac']).extract()[0].strip()
         
+        if response.xpath(xpath['AP_prac']).extract()[0].strip() == "":
+            AP_prac = response.xpath(xpath['AP_prac_red']).extract()[0].strip()
+        else:
+            AP_prac = response.xpath(xpath['AP_prac']).extract()[0].strip()
+        
         if response.xpath(xpath['BEE_prac']).extract()[0].strip() == "":
             BEE_prac = response.xpath(xpath['BEE_prac_red']).extract()[0].strip()
         else:
@@ -158,6 +165,7 @@ class MySpider(InitSpider):
         yield PracticalsItem(
             AC_prac=AC_prac,
             AM_prac=AM_prac,
+            AP_prac=AP_prac,
             BEE_prac=BEE_prac,
             Workshop=Workshop,
             EM_prac=EM_prac,

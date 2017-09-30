@@ -67,6 +67,7 @@ def attendance(bot, update):
         AM_prac = a_r[1]['AM_prac']
         #AP_prac = a_r[1]['AP_prac']
         AC_prac = a_r[1]['AC_prac']
+        AP_prac = a_r[1]['AP_prac']
         EM_prac = a_r[1]['EM_prac']
         BEE_prac = a_r[1]['BEE_prac']
         Workshop = a_r[1]['Workshop']
@@ -84,6 +85,7 @@ def attendance(bot, update):
                 PRACTICALS:
                 AM: {AM_prac}
                 AC: {AC_prac}
+                AP: {AP_prac}
                 EM: {EM_prac}
                 BEE: {BEE_prac}
                 Workshop: {Workshop}
@@ -93,7 +95,7 @@ def attendance(bot, update):
                                              AC=AC, EM=EM, 
                                              BEE=BEE, EVS=EVS,
                                              Overall=Overall, AM_prac=AM_prac,
-                                             AC_prac=AC_prac,
+                                             AC_prac=AC_prac, AP_prac=AP_prac,
                                              EM_prac=EM_prac, BEE_prac=BEE_prac,
                                              Workshop=Workshop, Overall_prac=Overall_prac)
 

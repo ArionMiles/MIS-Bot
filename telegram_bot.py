@@ -25,11 +25,7 @@ APP_NAME = os.environ['APP_NAME']
 PORT = int(os.environ.get('PORT', '5000'))
 updater = Updater(TOKEN)
 
-# Setting Webhook
-updater.start_webhook(listen="0.0.0.0",
-                      port=PORT,
-                      url_path=TOKEN)
-updater.bot.setWebhook(APP_NAME + TOKEN)
+
 
 logging.basicConfig(format='%(asctime)s -# %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
 
@@ -133,5 +129,11 @@ dispatcher.add_handler(args_handler)
 dispatcher.add_handler(unknown_handler)
 dispatcher.add_handler(unknown_message)
 
-updater.start_polling()
+# Setting Webhook
+updater.start_webhook(listen="0.0.0.0",
+                      port=PORT,
+                      url_path=TOKEN)
+updater.bot.setWebhook(APP_NAME + TOKEN)
+
+#updater.start_polling()
 updater.idle()

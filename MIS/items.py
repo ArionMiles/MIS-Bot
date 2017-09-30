@@ -22,10 +22,10 @@ class LecturesItem(Item):
     total_lec_attended=Field()
 
 class PracticalsItem(Item):
-	AC_prac = Field()
-	AM_prac = Field()
+    AC_prac = Field()
+    AM_prac = Field()
     AP_prac = Field()
-	BEE_prac = Field()
-	Workshop = Field()
-	EM_prac = Field()
-	Overall_prac=Field()
+    BEE_prac = Field()
+    Workshop = Field()
+    EM_prac = Field()
+    Overall_prac=Field()

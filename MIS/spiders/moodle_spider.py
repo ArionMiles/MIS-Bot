@@ -146,7 +146,7 @@ class MySpider(InitSpider):
         if response.xpath(xpath['Overall_prac']).extract()[0].strip() == "Overall Practical Attendance:":
             Overall_prac = response.xpath(xpath['Overall_prac_red']).extract()[0].strip()
         else:
-            Overall_prac = str(response.xpath(xpath['Overall_prac']).extract()).strip()[33:]
+            Overall_prac = str(response.xpath(xpath['Overall_prac']).extract()).strip()[33:-2]
         
         
 

@@ -4,6 +4,7 @@ import json
 import textwrap
 import sys
 import time
+import ConfigParser
 from twisted.internet import reactor
 from scrapy import cmdline
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, RegexHandler
@@ -11,21 +12,15 @@ from MIS.spiders.moodle_spider import MySpider
 from scrapy.utils.project import get_project_settings
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
-from MIS.mis_misc_functions import bunk_lecture
+from MIS.mis_misc_functions import bunk_lecture, until80
 
 # Read settings from config file
-'''config = ConfigParser.RawConfigParser()
-config.read('MIS/spiders/creds.ini')
-TOKEN = config.get('BOT', 'TOKEN')'''
+config = ConfigParser.RawConfigParser()
+config.read('./MIS/spiders/creds.ini')
+TOKEN = config.get('BOT', 'TOKEN')
+CHAT_ID = config.get('BOT', 'CHAT_ID')
 
-TOKEN = os.environ['TOKEN']
-CHAT_ID = os.environ['CHAT_ID']
-
-APP_NAME = os.environ['APP_NAME']
-PORT = int(os.environ.get('PORT', '5000'))
 updater = Updater(TOKEN)
-
-
 
 logging.basicConfig(format='%(asctime)s -# %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
 
@@ -85,7 +80,7 @@ def attendance(bot, update):
                 EM: {EM_prac}
                 BEE: {BEE_prac}
                 Workshop: {Workshop}
-                Overall: {Overall_prac}
+                {Overall_prac}
                 """)
         messageContent = message_template.format(AM=AM, AP=AP,
                                              AC=AC, EM=EM, 
@@ -95,7 +90,7 @@ def attendance(bot, update):
                                              EM_prac=EM_prac, BEE_prac=BEE_prac,
                                              Workshop=Workshop, Overall_prac=Overall_prac)
 
-    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    bot.sendMessage(chat_id=CHAT_ID, text=messageContent)
 
     #Write contents of current report to old_report.json for difference() function
     with open('old_report.json', 'w') as old:
@@ -106,34 +101,36 @@ def attendance(bot, update):
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 def bunk_lec(bot, update, args):
-    r = bunk_lecture(int(args[0]), int(args[1]))
-    messageContent = 'Projected attendance = ' + str(r) + '%'
+    if len(args) == 2:
+        r = bunk_lecture(int(args[0]), int(args[1]))
+        messageContent = 'Projected attendance = ' + str(r) + '%'
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    else:
+        bot.sendMessage(chat_id=CHAT_ID, text='This command expects 2 arguments.')
 
-    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+def until_eighty(bot, update):
+    messageContent = 'No. of lectures to attend: ' + str(until80())
+    bot.sendMessage(chat_id=CHAT_ID, text=messageContent)
 
 def unknown(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="Sorry, I didn't get that.")
+    bot.sendMessage(chat_id=CHAT_ID, text="Sorry, I didn't get that.")
 
 
 # Handlers
 start_handler = CommandHandler('start', start)
 attendance_handler = CommandHandler('attendance', attendance)
-args_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
+bunk_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
+eighty_handler = CommandHandler('until80', until_eighty)
 unknown_handler = MessageHandler(Filters.command, unknown)
 unknown_message = MessageHandler(Filters.text, unknown)
 
 # Dispatchers
 dispatcher.add_handler(start_handler)
 dispatcher.add_handler(attendance_handler)
-dispatcher.add_handler(args_handler)
+dispatcher.add_handler(bunk_handler)
+dispatcher.add_handler(eighty_handler)
 dispatcher.add_handler(unknown_handler)
 dispatcher.add_handler(unknown_message)
 
-# Setting Webhook
-updater.start_webhook(listen="0.0.0.0",
-                      port=PORT,
-                      url_path=TOKEN)
-updater.bot.setWebhook(APP_NAME + TOKEN)
-
-#updater.start_polling()
+updater.start_polling()
 updater.idle()

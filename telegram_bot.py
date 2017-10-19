@@ -56,7 +56,7 @@ def attendance(bot, update):
         'FEED_URI' : 'attendance_output.json'
         })
 
-    d = runner.crawl(MySpider(PID=PID,passwd=password))
+    d = runner.crawl(MySpider, USERNAME=PID, PASSWORD=password)
     d.addBoth(lambda _: reactor.stop())
     reactor.run(installSignalHandlers=0)
 

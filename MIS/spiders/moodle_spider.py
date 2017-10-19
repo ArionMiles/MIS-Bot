@@ -31,10 +31,11 @@ class MySpider(InitSpider):
     login_page = 'http://report.aldel.org/student_page.php'
     start_urls = ['http://report.aldel.org/student/attendance_report.php']
 
-    def __init__(self, PID, passwd):
-        self.USERNAME = PID
-        self.PASSWORD = passwd
-
+    def __init__(self, USERNAME, PASSWORD, *args, **kwargs):
+       super(MySpider, self).__init__(*args, **kwargs)
+       self.USERNAME = USERNAME
+       self.PASSWORD = PASSWORD
+    
     def init_request(self):
         """This function is called before crawling starts."""
         return Request(url=self.login_page, callback=self.login)

@@ -42,7 +42,10 @@ def register(bot, update):
 def attendance(bot, update):
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
-    userChat = Chat.query.filter(Chat.chatID == chatID)[0]
+    if not Chat.query.filter(Chat.chatID == chatID).first():
+        bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
+        return
+    userChat = Chat.query.filter(Chat.chatID == chatID).first()
     PID = userChat.PID
     password = userChat.password
 
@@ -135,11 +138,11 @@ def credentials(bot, update):
     user = update.message.from_user
     chatID = update.message.chat_id
     PID, passwd = update.message.text.split()
-
-    #dict(username=PID, password=passwd)
-    # data = {'username': PID, 'password': passwd, 'chat_id': update.message.chat_id}
-    # #json.dumps(data)
     
+    if Chat.query.filter(Chat.chatID == chatID).first():
+            bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
+            return
+
     logger.info("Creds: Username %s , Password: %s" % (PID, passwd))
     
     # Create an object of Class <Chat> and store PID, password, and Telegeram

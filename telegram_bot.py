@@ -7,27 +7,31 @@ import time
 import ConfigParser
 from twisted.internet import reactor
 from scrapy import cmdline
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, RegexHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, RegexHandler, ConversationHandler
 from MIS.spiders.moodle_spider import MySpider
 from scrapy.utils.project import get_project_settings
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
 from MIS.mis_misc_functions import bunk_lecture, until80
 
-# Read settings from config file
-config = ConfigParser.RawConfigParser()
-config.read('./MIS/spiders/creds.ini')
-TOKEN = config.get('BOT', 'TOKEN')
-CHAT_ID = config.get('BOT', 'CHAT_ID')
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
-updater = Updater(TOKEN)
-
-logging.basicConfig(format='%(asctime)s -# %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
-
-dispatcher = updater.dispatcher
+logger = logging.getLogger(__name__)
+CREDENTIALS= 0
 
 def start(bot, update):
-    bot.sendMessage(chat_id=CHAT_ID, text="Hi! I'm a telegram Bot for MIS")
+    bot.sendMessage(chat_id=update.message.chat_id, text="Hi! I'm a telegram Bot for MIS.\n Send me your MIS credentials.")
+    #user = update.message.from_user
+    #logger.info("Credentials of %s: %s" % (user.first_name, update.message.text))
+    #update.message.reply_text('Thank you! Your info is stored.')
+
+    return CREDENTIALS
+
+def register(bot, update):
+    bot.sendMessage(chat_id=update.message.chat_id, text='To register, send me your MIS credentials.')
+    return CREDENTIALS
 
 def attendance(bot, update):
     #Empty the previous report contents
@@ -90,7 +94,7 @@ def attendance(bot, update):
                                              EM_prac=EM_prac, BEE_prac=BEE_prac,
                                              Workshop=Workshop, Overall_prac=Overall_prac)
 
-    bot.sendMessage(chat_id=CHAT_ID, text=messageContent)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
     #Write contents of current report to old_report.json for difference() function
     with open('old_report.json', 'w') as old:
@@ -106,31 +110,72 @@ def bunk_lec(bot, update, args):
         messageContent = 'Projected attendance = ' + str(r) + '%'
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     else:
-        bot.sendMessage(chat_id=CHAT_ID, text='This command expects 2 arguments.')
+        bot.sendMessage(chat_id=update.message.chat_id, text='This command expects 2 arguments.')
 
 def until_eighty(bot, update):
     messageContent = 'No. of lectures to attend: ' + str(until80())
-    bot.sendMessage(chat_id=CHAT_ID, text=messageContent)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def unknown(bot, update):
-    bot.sendMessage(chat_id=CHAT_ID, text="Sorry, I didn't get that.")
+    bot.sendMessage(chat_id=update.message.chat_id, text="Sorry, I didn't get that.")
 
+def credentials(bot, update):
+    user = update.message.from_user
+    
+    PID, passwd = update.message.text.split()
+    #dict(username=PID, password=passwd)
+    data = {'username': PID, 'password': passwd, 'chat_id': update.message.chat_id}
+    #json.dumps(data)
+    logger.info("Creds: Username %s , Password: %s" % (PID, passwd))
+    with open('user-data.json', 'w') as f:
+        file=json.dumps(data, f)
+        f.write(file)
+    update.message.reply_text('Credentials stored!')
 
-# Handlers
-start_handler = CommandHandler('start', start)
-attendance_handler = CommandHandler('attendance', attendance)
-bunk_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
-eighty_handler = CommandHandler('until80', until_eighty)
-unknown_handler = MessageHandler(Filters.command, unknown)
-unknown_message = MessageHandler(Filters.text, unknown)
+    return ConversationHandler.END
 
-# Dispatchers
-dispatcher.add_handler(start_handler)
-dispatcher.add_handler(attendance_handler)
-dispatcher.add_handler(bunk_handler)
-dispatcher.add_handler(eighty_handler)
-dispatcher.add_handler(unknown_handler)
-dispatcher.add_handler(unknown_message)
+def cancel(bot, update):
+    bot.sendMessage(chat_id=update.message.chat_id, text="Cancelled")
 
-updater.start_polling()
-updater.idle()
+def main():
+    # Read settings from config file
+    config = ConfigParser.RawConfigParser()
+    config.read('./MIS/spiders/creds.ini')
+    TOKEN = config.get('BOT', 'TOKEN')
+    #CHAT_ID = config.get('BOT', 'CHAT_ID')
+
+    updater = Updater(TOKEN)
+
+    dispatcher = updater.dispatcher
+
+    conv_handler = ConversationHandler(
+            entry_points=[CommandHandler('start', start), CommandHandler('register', register)],
+
+            states={
+                CREDENTIALS: [MessageHandler(Filters.text, credentials)]
+            },
+
+            fallbacks=[CommandHandler('cancel', cancel)]
+        )
+    # Handlers
+    start_handler = CommandHandler('start', start)
+    attendance_handler = CommandHandler('attendance', attendance)
+    bunk_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
+    eighty_handler = CommandHandler('until80', until_eighty)
+    unknown_handler = MessageHandler(Filters.command, unknown)
+    unknown_message = MessageHandler(Filters.text, unknown)
+
+    # Dispatchers
+    #dispatcher.add_handler(start_handler)
+    dispatcher.add_handler(conv_handler)
+    dispatcher.add_handler(attendance_handler)
+    dispatcher.add_handler(bunk_handler)
+    dispatcher.add_handler(eighty_handler)
+    #dispatcher.add_handler(unknown_handler)
+    #dispatcher.add_handler(unknown_message)
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()

@@ -157,6 +157,16 @@ def credentials(bot, update):
 
 def cancel(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Cancelled")
+    
+
+def delete(bot, update):
+    chatID = update.message.chat_id
+    if not Chat.query.filter(Chat.chatID == chatID).first():
+        bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
+        return
+    userChat = Chat.query.filter(Chat.chatID == chatID)
+    userChat.delete()
+    bot.sendMessage(chat_id=update.message.chat_id, text="Deleted User!")
 
 def main():
     # Read settings from config file
@@ -183,6 +193,7 @@ def main():
     attendance_handler = CommandHandler('attendance', attendance)
     bunk_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
+    delete_handler = ComomandHandler('delete',delete)
     unknown_handler = MessageHandler(Filters.command, unknown)
     unknown_message = MessageHandler(Filters.text, unknown)
 
@@ -192,6 +203,7 @@ def main():
     dispatcher.add_handler(attendance_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)
+    dispatcher.add_handler(delete_handler)
     #dispatcher.add_handler(unknown_handler)
     #dispatcher.add_handler(unknown_message)
 

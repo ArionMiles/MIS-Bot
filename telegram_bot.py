@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import os
 import json
@@ -5,6 +6,7 @@ import textwrap
 import sys
 import time
 import ConfigParser
+import random
 from twisted.internet import reactor
 from scrapy import cmdline
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, RegexHandler, ConversationHandler
@@ -13,10 +15,8 @@ from scrapy.utils.project import get_project_settings
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
 from MIS.mis_misc_functions import bunk_lecture, until80
-
 from database import init_db, db_session
 from models import Chat
-
 # Init Database
 init_db()
 
@@ -28,7 +28,14 @@ logger = logging.getLogger(__name__)
 CREDENTIALS= 0
 
 def start(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="Hi! I'm a telegram Bot for MIS.\n Send me your MIS credentials.")
+    #octocat= emojize("::", use_aliases=True)
+    intro_message = "Hi! I'm a Telegram Bot for MIS.\
+    \nMy source code lives at [Github.](https://github.com/ArionMiles/MIS-Bot)" + "👨‍💻" \
+    "\nTo start using my services, please send me your MIS credentials in this format: \
+    \n`PID password` \
+    \n(in a single line, separated by a space)"
+    bot.sendMessage(chat_id=update.message.chat_id, text=intro_message, parse_mode='markdown',\
+        disable_web_page_preview=True)
     #user = update.message.from_user
     #logger.info("Credentials of %s: %s" % (user.first_name, update.message.text))
     #update.message.reply_text('Thank you! Your info is stored.')
@@ -36,14 +43,17 @@ def start(bot, update):
     return CREDENTIALS
 
 def register(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text='To register, send me your MIS credentials.')
+    messageContent = "To register, send me your MIS credentials in this format: \
+    \n`PID password` \
+    \n(in a single line, separated by a space)"
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
     return CREDENTIALS
 
 def attendance(bot, update):
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
     if not Chat.query.filter(Chat.chatID == chatID).first():
-        bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
+        bot.sendMessage(chat_id=update.message.chat_id, text="📋 " + "Unregistered! Please use /register to start.")
         return
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
     PID = userChat.PID
@@ -131,9 +141,6 @@ def until_eighty(bot, update):
     messageContent = 'No. of lectures to attend: ' + str(until80())
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
-def unknown(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="Sorry, I didn't get that.")
-
 def credentials(bot, update):
     user = update.message.from_user
     chatID = update.message.chat_id
@@ -152,11 +159,18 @@ def credentials(bot, update):
     db_session.add(userChat)
     db_session.commit()
 
-    update.message.reply_text('Credentials stored for user: {}!'.format(userChat.PID))
+    update.message.reply_text("💾 " + "Credentials stored for user: {}!".format(userChat.PID))
     return ConversationHandler.END
 
 def cancel(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="Cancelled")
+    bot.sendMessage(chat_id=update.message.chat_id, text="As you wish, the operation has been cancelled! 😊")
+
+def unknown(bot, update):
+    can = ["Seems like I'm not programmed to understand this yet.", "I'm not a fully functional A.I. ya know?", \
+    "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "I wish the creator imbued me with the ability to respond to your query.",\
+     "I'm afraid I can't do that.", "Damn you're dumb.", "Please don't abuse me now that you found this."]
+    messageContent = random.choice(can)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def main():
     # Read settings from config file
@@ -183,7 +197,7 @@ def main():
     attendance_handler = CommandHandler('attendance', attendance)
     bunk_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
-    unknown_handler = MessageHandler(Filters.command, unknown)
+    unknown_command = MessageHandler(Filters.command, unknown)
     unknown_message = MessageHandler(Filters.text, unknown)
 
     # Dispatchers
@@ -192,8 +206,8 @@ def main():
     dispatcher.add_handler(attendance_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)
-    #dispatcher.add_handler(unknown_handler)
-    #dispatcher.add_handler(unknown_message)
+    #dispatcher.add_handler(unknown_command)
+    dispatcher.add_handler(unknown_message)
 
     updater.start_polling()
     updater.idle()

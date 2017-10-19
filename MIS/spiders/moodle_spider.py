@@ -22,7 +22,7 @@ xpaths=[
     {"name": "BEE_prac", "query": "//table[2]/tr[5]/td[4]/", "check_for_red": True, "is_practical":True},
     {"name": "Workshop", "query": "//table[2]/tr[6]/td[4]/", "check_for_red": True, "is_practical":True},
     {"name": "EM_prac", "query": "//table[2]/tr[7]/td[4]/", "check_for_red": True, "is_practical":True},
-    {"name": "Overall_prac", "query": "//label/h2/", "check_for_red": True, "is_practical":True}
+    {"name": "Overall_prac", "query": "//label/", "check_for_red": True, "is_practical":True}
 ]
 
 class MySpider(InitSpider):
@@ -68,19 +68,21 @@ class MySpider(InitSpider):
         for xpath in xpaths:
             query = xpath['query']
             if xpath["check_for_red"]:
-                query = xpath['query'] + "text()"
+                query = xpath['query'] + "/descendant::*/text()"
+                #query4 = xpath['query'] + "u/text()"
                 query2 = xpath['query'] + "font/u/b/text()"
                 query3 = xpath['query'] + "u/b/text()"
 
                 value1 = str(response.xpath(query).extract_first()).strip()
                 value2 = response.xpath(query2).extract_first()
                 value3 = response.xpath(query3).extract_first()
+                #value4 = response.xpath(query4).extract_first()
                 value = value3 or value2 or value1
             else:
                 value = response.xpath(query).extract_first()
 
             if xpath["is_practical"]:
-                practicals_kwargs[xpath["name"]] = value.strip()
+                practicals_kwargs[xpath["name"]] = str(value).strip()
             else:
                 lecture_kwargs[xpath["name"]] = value
 

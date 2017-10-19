@@ -14,6 +14,12 @@ from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
 from MIS.mis_misc_functions import bunk_lecture, until80
 
+from database import init_db, db_session
+from models import Chat
+
+# Init Database
+init_db()
+
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -34,6 +40,15 @@ def register(bot, update):
     return CREDENTIALS
 
 def attendance(bot, update):
+    # Get chatID and user details based on chatID
+    chatID = update.message.chat_id
+    if not Chat.query.filter(Chat.chatID == chatID).first():
+        bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
+        return
+    userChat = Chat.query.filter(Chat.chatID == chatID).first()
+    PID = userChat.PID
+    password = userChat.password
+
     #Empty the previous report contents
     with open('attendance_output.json', 'w') as att:
         pass
@@ -44,7 +59,7 @@ def attendance(bot, update):
         'FEED_URI' : 'attendance_output.json'
         })
 
-    d = runner.crawl(MySpider)
+    d = runner.crawl(MySpider, USERNAME=PID, PASSWORD=password)
     d.addBoth(lambda _: reactor.stop())
     reactor.run(installSignalHandlers=0)
 
@@ -121,17 +136,23 @@ def unknown(bot, update):
 
 def credentials(bot, update):
     user = update.message.from_user
-    
+    chatID = update.message.chat_id
     PID, passwd = update.message.text.split()
-    #dict(username=PID, password=passwd)
-    data = {'username': PID, 'password': passwd, 'chat_id': update.message.chat_id}
-    #json.dumps(data)
-    logger.info("Creds: Username %s , Password: %s" % (PID, passwd))
-    with open('user-data.json', 'w') as f:
-        file=json.dumps(data, f)
-        f.write(file)
-    update.message.reply_text('Credentials stored!')
+    
+    if Chat.query.filter(Chat.chatID == chatID).first():
+            bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
+            return
 
+    logger.info("Creds: Username %s , Password: %s" % (PID, passwd))
+    
+    # Create an object of Class <Chat> and store PID, password, and Telegeram
+    # User ID, Add it to the database, commit it to the database. 
+
+    userChat = Chat(PID  = PID, password = passwd, chatID = chatID)
+    db_session.add(userChat)
+    db_session.commit()
+
+    update.message.reply_text('Credentials stored for user: {}!'.format(userChat.PID))
     return ConversationHandler.END
 
 def cancel(bot, update):

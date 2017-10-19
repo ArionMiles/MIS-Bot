@@ -72,7 +72,7 @@ class MySpider(InitSpider):
                 query2 = xpath['query'] + "font/u/b/text()"
                 query3 = xpath['query'] + "u/b/text()"
 
-                value1 = response.xpath(query).extract_first()
+                value1 = str(response.xpath(query).extract_first()).strip()
                 value2 = response.xpath(query2).extract_first()
                 value3 = response.xpath(query3).extract_first()
                 value = value3 or value2 or value1

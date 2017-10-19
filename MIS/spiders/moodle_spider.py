@@ -1,17 +1,10 @@
 #!/usr/local/bin/python2.7
 import os
-import ConfigParser
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
 from ..items import LecturesItem, PracticalsItem
 from scrapy.shell import inspect_response
 from scrapy.crawler import CrawlerProcess
-
-config = ConfigParser.RawConfigParser()
-config.read('./MIS/spiders/creds.ini')
-USERNAME = config.get('MIS', 'USERNAME')
-PASSWORD = config.get('MIS', 'PASSWORD')
-
 
 xpaths=[
     {"name": "AM", "query": "//table[1]/tr[3]/td[4]/", "check_for_red": True, "is_practical":False},
@@ -38,7 +31,11 @@ class MySpider(InitSpider):
     login_page = 'http://report.aldel.org/student_page.php'
     start_urls = ['http://report.aldel.org/student/attendance_report.php']
 
-
+    def __init__(self, USERNAME, PASSWORD, *args, **kwargs):
+       super(MySpider, self).__init__(*args, **kwargs)
+       self.USERNAME = USERNAME
+       self.PASSWORD = PASSWORD
+    
     def init_request(self):
         """This function is called before crawling starts."""
         return Request(url=self.login_page, callback=self.login)
@@ -46,14 +43,14 @@ class MySpider(InitSpider):
     def login(self, response):
         """Generate a login request."""
         return FormRequest.from_response(response,
-                    formdata={'studentid': USERNAME, 'studentpwd': PASSWORD},
+                    formdata={'studentid': self.USERNAME, 'studentpwd': self.PASSWORD},
                     callback=self.check_login_response)
 
     def check_login_response(self, response):
         """Check the response returned by a login request to see if we are
         successfully logged in.
         """
-        if USERNAME in response.body:
+        if self.USERNAME in response.body:
             self.log("Login Successful!")
             # Now the crawling can begin..
             return self.initialized()
@@ -75,7 +72,7 @@ class MySpider(InitSpider):
                 query2 = xpath['query'] + "font/u/b/text()"
                 query3 = xpath['query'] + "u/b/text()"
 
-                value1 = response.xpath(query).extract_first()
+                value1 = str(response.xpath(query).extract_first()).strip()
                 value2 = response.xpath(query2).extract_first()
                 value3 = response.xpath(query3).extract_first()
                 value = value3 or value2 or value1

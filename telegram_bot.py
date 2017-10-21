@@ -162,6 +162,15 @@ def credentials(bot, update):
     update.message.reply_text("💾 " + "Credentials stored for user: {}!".format(userChat.PID))
     return ConversationHandler.END
 
+def delete(bot, update):
+    chatID = update.message.chat_id
+    if not Chat.query.filter(Chat.chatID == chatID).first():
+        bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
+        return
+    userChat = Chat.query.filter(Chat.chatID == chatID)
+    userChat.delete()
+    bot.sendMessage(chat_id=update.message.chat_id, text="Deleted User!")
+
 def cancel(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="As you wish, the operation has been cancelled! 😊")
 
@@ -197,12 +206,14 @@ def main():
     attendance_handler = CommandHandler('attendance', attendance)
     bunk_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
+    delete_handler = CommandHandler('delete', delete)
     unknown_command = MessageHandler(Filters.command, unknown)
     unknown_message = MessageHandler(Filters.text, unknown)
 
     # Dispatchers
     #dispatcher.add_handler(start_handler)
     dispatcher.add_handler(conv_handler)
+    dispatcher.add_handler(delete_handler)
     dispatcher.add_handler(attendance_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)

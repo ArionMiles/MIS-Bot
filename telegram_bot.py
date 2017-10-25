@@ -4,31 +4,26 @@ import os
 import json
 import textwrap
 import sys
-import time
 import ConfigParser
 import random
 from twisted.internet import reactor
 from scrapy import cmdline
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, RegexHandler, ConversationHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 from MIS.spiders.moodle_spider import MySpider
 from scrapy.utils.project import get_project_settings
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
+from multithreading import Thread
+
 from MIS.mis_misc_functions import bunk_lecture, until80
 from database import init_db, db_session
 from models import Chat
-
-from threading import Thread
-# Init Database
-init_db()
 
 # Read settings from config file
 config = ConfigParser.RawConfigParser()
 config.read('MIS/spiders/creds.ini')
 TOKEN = config.get('BOT', 'TOKEN')
-#CHAT_ID = config.get('BOT', 'CHAT_ID')
 updater = Updater(TOKEN)
-
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -38,7 +33,7 @@ logger = logging.getLogger(__name__)
 CREDENTIALS= 0
 
 def start(bot, update):
-    #octocat= emojize("::", use_aliases=True)
+    """Initial message sent to all users."""
     intro_message = "Hi! I'm a Telegram Bot for MIS.\
     \nMy source code lives at [Github.](https://github.com/ArionMiles/MIS-Bot)" + "👨‍💻" \
     "\nTo start using my services, please send me your MIS credentials in this format: \
@@ -46,13 +41,11 @@ def start(bot, update):
     \n(in a single line, separated by a space)"
     bot.sendMessage(chat_id=update.message.chat_id, text=intro_message, parse_mode='markdown',\
         disable_web_page_preview=True)
-    #user = update.message.from_user
-    #logger.info("Credentials of %s: %s" % (user.first_name, update.message.text))
-    #update.message.reply_text('Thank you! Your info is stored.')
 
     return CREDENTIALS
 
 def register(bot, update):
+    """Let all users register with their credentials."""
     messageContent = "To register, send me your MIS credentials in this format: \
     \n`PID password` \
     \n(in a single line, separated by a space)"
@@ -61,8 +54,8 @@ def register(bot, update):
 
 
 def attendance(bot, update):
+    """Core function. Fetch attendance figures from Aldel's MIS."""
     # Get chatID and user details based on chatID
-    #update = job.context
     chatID = update.message.chat_id
     if not Chat.query.filter(Chat.chatID == chatID).first():
         bot.sendMessage(chat_id=update.message.chat_id, text="📋 " + "Unregistered! Please use /register to start.")
@@ -145,6 +138,7 @@ def attendance(bot, update):
     Thread(target=stop_and_restart).start()
 
 def bunk_lec(bot, update, args):
+    """Calculate drop/rise in attendance if you bunk some lectures."""
     if len(args) == 2:
         r = bunk_lecture(int(args[0]), int(args[1]))
         messageContent = 'Projected attendance = ' + str(r) + '%'
@@ -153,6 +147,7 @@ def bunk_lec(bot, update, args):
         bot.sendMessage(chat_id=update.message.chat_id, text='This command expects 2 arguments.')
 
 def until_eighty(bot, update):
+    """Calculate number of lectures you must consecutively attend before you attendance is 80%"""
     if int(until80()) <0:
         bot.sendMessage(chat_id=update.message.chat_id, text="Your attendance is already over 80. Relax.")
     else:
@@ -160,6 +155,7 @@ def until_eighty(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def credentials(bot, update):
+    """Store user credentials in a database."""
     user = update.message.from_user
     chatID = update.message.chat_id
     PID, passwd = update.message.text.split()
@@ -182,6 +178,7 @@ def credentials(bot, update):
     return ConversationHandler.END
 
 def delete(bot, update):
+    """Delete a user's credentials if they wish to stop using the bot."""
     chatID = update.message.chat_id
     if not Chat.query.filter(Chat.chatID == chatID).first():
         bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
@@ -191,19 +188,21 @@ def delete(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Deleted User!")
 
 def cancel(bot, update):
+    """Cancel registration operation."""
     bot.sendMessage(chat_id=update.message.chat_id, text="As you wish, the operation has been cancelled! 😊")
 
 def unknown(bot, update):
+    """Respond to messages incomprehensible with some canned responses."""
     can = ["Seems like I'm not programmed to understand this yet.", "I'm not a fully functional A.I. ya know?", \
     "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "I wish the creator imbued me with the ability to respond to your query.",\
      "I'm afraid I can't do that.", "Damn you're dumb.", "Please don't abuse me now that you found this."]
     messageContent = random.choice(can)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
-def fetch_attendance(bot, update, job_queue):
-    job_queue.run_once(attendance, 0, context=update)
-
 def main():
+    """Start the bot and use long polling to detect and respond to new messages."""
+    # Init Database
+    init_db()
     dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(
@@ -225,15 +224,14 @@ def main():
     unknown_message = MessageHandler(Filters.text, unknown)
 
     # Dispatchers
-    #dispatcher.add_handler(start_handler)
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(delete_handler)
     dispatcher.add_handler(attendance_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)
-    #dispatcher.add_handler(unknown_command)
     dispatcher.add_handler(unknown_message)
 
+    #Long polling
     updater.start_polling()
     updater.idle()
 

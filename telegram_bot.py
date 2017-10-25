@@ -153,13 +153,17 @@ def bunk_lec(bot, update, args):
         bot.sendMessage(chat_id=update.message.chat_id, text='This command expects 2 arguments.')
 
 def until_eighty(bot, update):
-    messageContent = 'No. of lectures to attend: ' + str(until80())
-    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    if int(until80()) <0:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Your attendance is already over 80. Relax.")
+    else:
+        messageContent = 'No. of lectures to attend: ' + str(until80())
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def credentials(bot, update):
     user = update.message.from_user
     chatID = update.message.chat_id
     PID, passwd = update.message.text.split()
+    
     
     if Chat.query.filter(Chat.chatID == chatID).first():
             bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")

@@ -24,7 +24,7 @@ init_db()
 
 # Read settings from config file
 config = ConfigParser.RawConfigParser()
-config.read('./MIS/spiders/creds.ini')
+config.read('MIS/spiders/creds.ini')
 TOKEN = config.get('BOT', 'TOKEN')
 #CHAT_ID = config.get('BOT', 'CHAT_ID')
 updater = Updater(TOKEN)

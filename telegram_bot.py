@@ -17,8 +17,18 @@ from scrapy.utils.log import configure_logging
 from MIS.mis_misc_functions import bunk_lecture, until80
 from database import init_db, db_session
 from models import Chat
+
+from threading import Thread
 # Init Database
 init_db()
+
+# Read settings from config file
+config = ConfigParser.RawConfigParser()
+config.read('./MIS/spiders/creds.ini')
+TOKEN = config.get('BOT', 'TOKEN')
+#CHAT_ID = config.get('BOT', 'CHAT_ID')
+updater = Updater(TOKEN)
+
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -49,8 +59,10 @@ def register(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
     return CREDENTIALS
 
+
 def attendance(bot, update):
     # Get chatID and user details based on chatID
+    #update = job.context
     chatID = update.message.chat_id
     if not Chat.query.filter(Chat.chatID == chatID).first():
         bot.sendMessage(chat_id=update.message.chat_id, text="📋 " + "Unregistered! Please use /register to start.")
@@ -126,8 +138,11 @@ def attendance(bot, update):
         json.dump(a_r, old, indent=4)
 
     #Restart the bot to counter ReactorNotRestartable error.
-    time.sleep(0.2)
-    os.execl(sys.executable, sys.executable, *sys.argv)
+    def stop_and_restart():
+        """Gracefully stop the Updater and replace the current process with a new one"""
+        updater.stop()
+        os.execl(sys.executable, sys.executable, *sys.argv)
+    Thread(target=stop_and_restart).start()
 
 def bunk_lec(bot, update, args):
     if len(args) == 2:
@@ -181,15 +196,10 @@ def unknown(bot, update):
     messageContent = random.choice(can)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
+def fetch_attendance(bot, update, job_queue):
+    job_queue.run_once(attendance, 0, context=update)
+
 def main():
-    # Read settings from config file
-    config = ConfigParser.RawConfigParser()
-    config.read('./MIS/spiders/creds.ini')
-    TOKEN = config.get('BOT', 'TOKEN')
-    #CHAT_ID = config.get('BOT', 'CHAT_ID')
-
-    updater = Updater(TOKEN)
-
     dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(

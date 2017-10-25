@@ -7,15 +7,15 @@ from scrapy.shell import inspect_response
 from scrapy.crawler import CrawlerProcess
 
 xpaths=[
-    {"name": "AM", "query": "//table[1]/tr[3]/td[4]/"},
-    {"name": "AP", "query": "//table[1]/tr[4]/td[4]/"},
-    {"name": "AC", "query": "//table[1]/tr[5]/td[4]/"},
-    {"name": "EM", "query": "//table[1]/tr[6]/td[4]/"},
-    {"name": "BEE", "query": "//table[1]/tr[7]/td[4]/"},
-    {"name": "EVS", "query": "//table[1]/tr[8]/td[4]/"},
-    {"name": "Overall", "query": "//center/h2/u//text()", "clean":lambda values: "".join(values).strip(), "check_for_red":False},
-    {"name": "total_lec_conducted", "query": "//table[1]/tr[9]/td[2]/b/text()", "check_for_red":False, "is_practical":False},
-    {"name": "total_lec_attended", "query": "//table[1]/tr[9]/td[3]/b/text()", "check_for_red": False, "is_practical":False},
+    {"name": "AM", "query": "//table[1]/tr[3]/td[4]/", "is_practical":False},
+    {"name": "AP", "query": "//table[1]/tr[4]/td[4]/", "is_practical":False},
+    {"name": "AC", "query": "//table[1]/tr[5]/td[4]/", "is_practical":False},
+    {"name": "EM", "query": "//table[1]/tr[6]/td[4]/", "is_practical":False},
+    {"name": "BEE", "query": "//table[1]/tr[7]/td[4]/", "is_practical":False},
+    {"name": "EVS", "query": "//table[1]/tr[8]/td[4]/", "is_practical":False},
+    {"name": "Overall", "query": "//center/h2/u//text()", "clean":lambda values: "".join(values).strip(), "check_for_red":False, "is_practical":False},
+    {"name": "total_lec_conducted", "query": "//table[1]/tr[9]/td[2]/b/text()", "check_for_red":False, "is_practical":False, "is_practical":False},
+    {"name": "total_lec_attended", "query": "//table[1]/tr[9]/td[3]/b/text()", "check_for_red": False, "is_practical":False, "is_practical":False},
     {"name": "AC_prac", "query": "//table[2]/tr[2]/td[4]/", "is_practical":True},
     {"name": "AM_prac", "query": "//table[2]/tr[3]/td[4]/", "is_practical":True},
     {"name": "AP_prac", "query": "//table[2]/tr[4]/td[4]/", "is_practical":True},
@@ -79,6 +79,7 @@ class MySpider(InitSpider):
                 value = value1 or value2
             else:
                 value = cleaner(response.xpath(query).extract())
+
             if xpath["is_practical"]:
                 practicals_kwargs[xpath["name"]] = str(value).strip()
             else:
@@ -87,3 +88,23 @@ class MySpider(InitSpider):
         yield LecturesItem(**lecture_kwargs)
 
         yield PracticalsItem(**practicals_kwargs)
+
+def run_spider():
+    def f(q):
+        try:
+            runner = crawler.CrawlerRunner()
+            deferred = runner.crawl(MySpider)
+            deferred.addBoth(lambda _: reactor.stop())
+            reactor.run()
+            q.put(None)
+        except Exception as e:
+            q.put(e)
+
+    q = Queue()
+    p = Process(target=f, args=(q,))
+    p.start()
+    result = q.get()
+    p.join()
+
+    if result is not None:
+        raise result

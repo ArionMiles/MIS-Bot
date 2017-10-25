@@ -19,8 +19,6 @@ from database import init_db, db_session
 from models import Chat
 
 from threading import Thread
-# Init Database
-init_db()
 
 # Read settings from config file
 config = ConfigParser.RawConfigParser()
@@ -204,6 +202,8 @@ def fetch_attendance(bot, update, job_queue):
     job_queue.run_once(attendance, 0, context=update)
 
 def main():
+    # Init Database
+    init_db()
     dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(

@@ -109,3 +109,5 @@ test\.bat
 
 user-data\.json
 chats.db
+
+chats\.db-journal

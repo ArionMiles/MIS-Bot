@@ -13,7 +13,7 @@ from MIS.spiders.moodle_spider import MySpider
 from scrapy.utils.project import get_project_settings
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
-from multithreading import Thread
+from threading import Thread
 
 from MIS.mis_misc_functions import bunk_lecture, until80
 from database import init_db, db_session
@@ -37,8 +37,10 @@ def start(bot, update):
     intro_message = "Hi! I'm a Telegram Bot for MIS.\
     \nMy source code lives at [Github.](https://github.com/ArionMiles/MIS-Bot)" + "👨‍💻" \
     "\nTo start using my services, please send me your MIS credentials in this format: \
-    \n`PID password` \
-    \n(in a single line, separated by a space)"
+    \n\n`PID password` \
+    \n(in a single line, separated by a space)\
+    \n\nUse /cancel to abort.\
+    \nUse /help to learn more."
     bot.sendMessage(chat_id=update.message.chat_id, text=intro_message, parse_mode='markdown',\
         disable_web_page_preview=True)
 
@@ -48,7 +50,8 @@ def register(bot, update):
     """Let all users register with their credentials."""
     messageContent = "To register, send me your MIS credentials in this format: \
     \n`PID password` \
-    \n(in a single line, separated by a space)"
+    \n(in a single line, separated by a space)\
+    \n\nUse /cancel to abort."
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
     return CREDENTIALS
 
@@ -144,7 +147,8 @@ def bunk_lec(bot, update, args):
         messageContent = 'Projected attendance = ' + str(r) + '%'
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     else:
-        bot.sendMessage(chat_id=update.message.chat_id, text='This command expects 2 arguments.')
+        bot.sendMessage(chat_id=update.message.chat_id, text='This command expects 2 arguments.\nUse /help \
+            to learn how to use this command.')
 
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%"""
@@ -199,6 +203,17 @@ def unknown(bot, update):
     messageContent = random.choice(can)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
+def help(bot, update):
+    helpText = "1. /register - Register yourself\
+                \n2. /attendance - Fetch attendance from the MIS website.\
+                \n3. /bunk - Calculate % drop/rise.\
+                \n`usage: /bunk x y`\
+                \nwhere `x = No. of lectures to bunk` \n`y = no. of lectures conducted on that day`\
+                \n4. /until80 - No. of lectures to attend consecutively until attendance is 80%\
+                \n5. /cancel - Cancel registration.\
+                \n6. /delete - Delete your credentials."
+    bot.sendMessage(chat_id=update.message.chat_id, text=helpText, parse_mode='markdown')
+
 def main():
     """Start the bot and use long polling to detect and respond to new messages."""
     # Init Database
@@ -220,6 +235,7 @@ def main():
     bunk_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
     delete_handler = CommandHandler('delete', delete)
+    help_handler = CommandHandler('help', help)
     unknown_command = MessageHandler(Filters.command, unknown)
     unknown_message = MessageHandler(Filters.text, unknown)
 
@@ -229,10 +245,11 @@ def main():
     dispatcher.add_handler(attendance_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)
+    dispatcher.add_handler(help_handler)
     dispatcher.add_handler(unknown_message)
 
     #Long polling
-    updater.start_polling()
+    updater.start_polling(read_latency=50)
     updater.idle()
 
 if __name__ == '__main__':

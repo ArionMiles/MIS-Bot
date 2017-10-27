@@ -15,13 +15,13 @@ from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
 from threading import Thread
 
-from MIS.mis_misc_functions import bunk_lecture, until80
+from mis_functions import bunk_lecture, until80
 from database import init_db, db_session
 from models import Chat
 
 # Read settings from config file
 config = ConfigParser.RawConfigParser()
-config.read('MIS/spiders/creds.ini')
+config.read('creds.ini')
 TOKEN = config.get('BOT', 'TOKEN')
 updater = Updater(TOKEN)
 
@@ -232,7 +232,7 @@ def main():
     # Handlers
     start_handler = CommandHandler('start', start)
     attendance_handler = CommandHandler('attendance', attendance)
-    bunk_handler = CommandHandler('bunklecture', bunk_lec, pass_args=True)
+    bunk_handler = CommandHandler('bunk', bunk_lec, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help)

@@ -111,3 +111,5 @@ user-data\.json
 chats.db
 
 chats\.db-journal
+
+creds\.ini

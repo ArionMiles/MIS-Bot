@@ -249,7 +249,7 @@ def main():
     dispatcher.add_handler(unknown_message)
 
     #Long polling
-    updater.start_polling(read_latency=50)
+    updater.start_polling()
     updater.idle()
 
 if __name__ == '__main__':

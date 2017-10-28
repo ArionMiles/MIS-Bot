@@ -51,6 +51,7 @@ def start(bot, update):
 def register(bot, update):
     """Let all users register with their credentials."""
     messageContent = "Okay, send me your MIS credentials in this format: \
+
     \n`PID password` \
     \n(in a single line, separated by a space)\
     \n\nUse /cancel to abort."
@@ -245,7 +246,7 @@ def main():
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help)
     #unknown_command = MessageHandler(Filters.command, unknown)
-    unknown_message = MessageHandler(Filters.text, unknown)
+    unknown_command = MessageHandler(Filters.command, unknown)
 
     # Dispatchers
     dispatcher.add_handler(conv_handler)

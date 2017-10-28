@@ -1,7 +1,0 @@
-{
-  "name": "Aldel MIS Bot",
-  "description": "Telegram Bot for attendance report from Aldel's MIS.",
-  "image": "heroku/python",
-  "repository": "TBA",
-  "keywords": ["python", "telegram", "python-telegram-bot", "Web scraping", "scrapy" ]
-}

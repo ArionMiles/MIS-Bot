@@ -69,6 +69,7 @@ def attendance(bot, job):
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
     PID = userChat.PID
     password = userChat.password
+    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
 
     #Empty the previous report contents
     with open('attendance_output.json', 'w') as att:

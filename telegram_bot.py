@@ -51,7 +51,6 @@ def start(bot, update):
 def register(bot, update):
     """Let all users register with their credentials."""
     messageContent = "Okay, send me your MIS credentials in this format: \
-
     \n`PID password` \
     \n(in a single line, separated by a space)\
     \n\nUse /cancel to abort."

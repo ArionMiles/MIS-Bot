@@ -30,6 +30,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+#Define state
 CREDENTIALS= 0
 
 def start(bot, update):
@@ -48,7 +50,7 @@ def start(bot, update):
 
 def register(bot, update):
     """Let all users register with their credentials."""
-    messageContent = "To register, send me your MIS credentials in this format: \
+    messageContent = "Okay, send me your MIS credentials in this format: \
     \n`PID password` \
     \n(in a single line, separated by a space)\
     \n\nUse /cancel to abort."
@@ -162,12 +164,17 @@ def credentials(bot, update):
     """Store user credentials in a database."""
     user = update.message.from_user
     chatID = update.message.chat_id
-    PID, passwd = update.message.text.split()
-    
-    
+    #If message contains less or more than 2 arguments, send message and stop. 
+    try:
+        PID, passwd = update.message.text.split()
+    except ValueError:
+        update.message.reply_text("Oops, you made a mistake! You must send the PID and password\
+            in a single line, separated by a space.")
+        return
+
     if Chat.query.filter(Chat.chatID == chatID).first():
             bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
-            return
+            return ConversationHandler.END
 
     logger.info("Creds: Username %s , Password: %s" % (PID, passwd))
     
@@ -194,6 +201,7 @@ def delete(bot, update):
 def cancel(bot, update):
     """Cancel registration operation."""
     bot.sendMessage(chat_id=update.message.chat_id, text="As you wish, the operation has been cancelled! 😊")
+    return ConversationHandler.END
 
 def unknown(bot, update):
     """Respond to messages incomprehensible with some canned responses."""
@@ -236,7 +244,7 @@ def main():
     eighty_handler = CommandHandler('until80', until_eighty)
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help)
-    unknown_command = MessageHandler(Filters.command, unknown)
+    #unknown_command = MessageHandler(Filters.command, unknown)
     unknown_message = MessageHandler(Filters.text, unknown)
 
     # Dispatchers
@@ -249,7 +257,7 @@ def main():
     dispatcher.add_handler(unknown_message)
 
     #Long polling
-    updater.start_polling(read_latency=50)
+    updater.start_polling(clean=True)
     updater.idle()
 
 if __name__ == '__main__':

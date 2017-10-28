@@ -3,8 +3,6 @@ import os
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
 from ..items import LecturesItem, PracticalsItem
-from scrapy.shell import inspect_response
-from scrapy.crawler import CrawlerProcess
 
 xpaths=[
     {"name": "AM", "query": "//table[1]/tr[3]/td[4]/", "is_practical":False},
@@ -88,23 +86,3 @@ class MySpider(InitSpider):
         yield LecturesItem(**lecture_kwargs)
 
         yield PracticalsItem(**practicals_kwargs)
-
-def run_spider():
-    def f(q):
-        try:
-            runner = crawler.CrawlerRunner()
-            deferred = runner.crawl(MySpider)
-            deferred.addBoth(lambda _: reactor.stop())
-            reactor.run()
-            q.put(None)
-        except Exception as e:
-            q.put(e)
-
-    q = Queue()
-    p = Process(target=f, args=(q,))
-    p.start()
-    result = q.get()
-    p.join()
-
-    if result is not None:
-        raise result

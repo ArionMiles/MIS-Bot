@@ -4,6 +4,7 @@ from collections import Counter
 from operator import sub
 from sympy.solvers import solve
 from sympy import Symbol, Eq, solveset
+
 def bunk_lecture(n, tot_lec):
     with open('attendance_output.json', 'r') as f:
         report = json.loads(f.read())

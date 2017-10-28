@@ -58,8 +58,9 @@ def register(bot, update):
     return CREDENTIALS
 
 
-def attendance(bot, update):
+def attendance(bot, job):
     """Core function. Fetch attendance figures from Aldel's MIS."""
+    update = job.context
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
     if not Chat.query.filter(Chat.chatID == chatID).first():
@@ -141,6 +142,9 @@ def attendance(bot, update):
         updater.stop()
         os.execl(sys.executable, sys.executable, *sys.argv)
     Thread(target=stop_and_restart).start()
+
+def fetch_attendance(bot, update, job_queue):
+    updater.job_queue.run_once(attendance, 0, context=update)
 
 def bunk_lec(bot, update, args):
     """Calculate drop/rise in attendance if you bunk some lectures."""
@@ -239,13 +243,12 @@ def main():
         )
     # Handlers
     start_handler = CommandHandler('start', start)
-    attendance_handler = CommandHandler('attendance', attendance)
+    attendance_handler = CommandHandler('attendance', fetch_attendance, pass_job_queue=True)
     bunk_handler = CommandHandler('bunk', bunk_lec, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help)
-    #unknown_command = MessageHandler(Filters.command, unknown)
-    unknown_command = MessageHandler(Filters.command, unknown)
+    unknown_message = MessageHandler(Filters.text, unknown)
 
     # Dispatchers
     dispatcher.add_handler(conv_handler)

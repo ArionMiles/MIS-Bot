@@ -155,8 +155,8 @@ def bunk_lec(bot, update, args):
         messageContent = 'Projected attendance = ' + str(r) + '%'
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     else:
-        bot.sendMessage(chat_id=update.message.chat_id, text='This command expects 2 arguments.\nUse /help \
-            to learn how to use this command.')
+        bot.sendMessage(chat_id=update.message.chat_id, text='This command expects 2 arguments.\
+            \nUse /help to learn how to use this command.')
 
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%"""
@@ -175,13 +175,14 @@ def credentials(bot, update):
     try:
         PID, passwd = update.message.text.split()
     except ValueError:
+        bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
         update.message.reply_text("Oops, you made a mistake! You must send the PID and password\
             in a single line, separated by a space.")
         return
 
     if Chat.query.filter(Chat.chatID == chatID).first():
-            bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
-            return ConversationHandler.END
+        bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
+        return ConversationHandler.END
 
     logger.info("Creds: Username %s , Password: %s" % (PID, passwd))
     
@@ -216,6 +217,7 @@ def unknown(bot, update):
     "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "I wish the creator imbued me with the ability to respond to your query.",\
      "I'm afraid I can't do that.", "Damn you're dumb.", "Please don't abuse me now that you found this."]
     messageContent = random.choice(can)
+    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def help(bot, update):
@@ -227,6 +229,7 @@ def help(bot, update):
                 \n4. /until80 - No. of lectures to attend consecutively until attendance is 80%\
                 \n5. /cancel - Cancel registration.\
                 \n6. /delete - Delete your credentials."
+    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     bot.sendMessage(chat_id=update.message.chat_id, text=helpText, parse_mode='markdown')
 
 def main():

@@ -233,8 +233,11 @@ def help(bot, update):
 
 def tips(bot, update):
     tips = ["Always use /attendance command before using /until80 or /bunk to get latest figures.",\
-    "The Aldel MIS gets updated at 6PM everyday.", "The /until80 function gives you the number of\
-    lectures you must attend *consecutively* before you attendance is 80%."]
+    "The Aldel MIS gets updated at 6PM everyday.", "The /until80 function gives you the number of lectures you must attend *consecutively* before you attendance is 80%."\
+    "The bunk calculator's figures are subject to differ from actual values depending upon a number of factors such as:\
+    \nMIS not being updated.\
+    \nCancellation of lectures.\
+    \nMass bunks. 😝"]
     messageContent = random.choice(tips)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
 

@@ -85,9 +85,9 @@ def attendance(bot, job):
     d.addBoth(lambda _: reactor.stop())
     reactor.run(installSignalHandlers=0)
 
-    with open("attendance_output.json", 'r') as file:
-        contents = file.read()
-        a_r = json.loads(contents)
+    with open("attendance_output.json", 'r') as f:
+        a_r = json.loads(f.read())
+        #Lectures
         AM = a_r[0]['AM']
         AP = a_r[0]['AP']
         AC = a_r[0]['AC']
@@ -97,7 +97,6 @@ def attendance(bot, job):
         Overall = a_r[0]['Overall']
         #Practicals
         AM_prac = a_r[1]['AM_prac']
-        #AP_prac = a_r[1]['AP_prac']
         AC_prac = a_r[1]['AC_prac']
         AP_prac = a_r[1]['AP_prac']
         EM_prac = a_r[1]['EM_prac']
@@ -229,8 +228,14 @@ def help(bot, update):
                 \n4. /until80 - No. of lectures to attend consecutively until attendance is 80%\
                 \n5. /cancel - Cancel registration.\
                 \n6. /delete - Delete your credentials."
-    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     bot.sendMessage(chat_id=update.message.chat_id, text=helpText, parse_mode='markdown')
+
+def tips(bot, update):
+    tips = ["Always use /attendance command before using /until80 or /bunk to get latest figures.",\
+    "The Aldel MIS gets updated at 6PM everyday.", "The /until80 function gives you the number of \
+    lectures you must attend *consecutively* before you attendance is 80%."]
+    messageContent = random.choice(tips)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def main():
     """Start the bot and use long polling to detect and respond to new messages."""
@@ -254,6 +259,7 @@ def main():
     eighty_handler = CommandHandler('until80', until_eighty)
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help)
+    tips_handler = CommandHandler('tips', tips)
     unknown_message = MessageHandler(Filters.text, unknown)
 
     # Dispatchers
@@ -263,6 +269,7 @@ def main():
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)
     dispatcher.add_handler(help_handler)
+    dispatcher.add_handler(tips_handler)
     dispatcher.add_handler(unknown_message)
 
     #Long polling

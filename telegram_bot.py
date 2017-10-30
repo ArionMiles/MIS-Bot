@@ -227,7 +227,8 @@ def help(bot, update):
                 \nwhere `x = No. of lectures to bunk` \n`y = no. of lectures conducted on that day`\
                 \n4. /until80 - No. of lectures to attend consecutively until attendance is 80%\
                 \n5. /cancel - Cancel registration.\
-                \n6. /delete - Delete your credentials."
+                \n6. /delete - Delete your credentials.\
+                \n7. /tips - Random tips."
     bot.sendMessage(chat_id=update.message.chat_id, text=helpText, parse_mode='markdown')
 
 def tips(bot, update):
@@ -235,7 +236,7 @@ def tips(bot, update):
     "The Aldel MIS gets updated at 6PM everyday.", "The /until80 function gives you the number of\
     lectures you must attend *consecutively* before you attendance is 80%."]
     messageContent = random.choice(tips)
-    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
 
 def main():
     """Start the bot and use long polling to detect and respond to new messages."""

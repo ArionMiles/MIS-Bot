@@ -25,6 +25,7 @@ queuelib==1.4.2
 Scrapy==1.4.0
 service-identity==17.0.0
 six==1.10.0
+SQLAlchemy==1.1.14
 sympy==1.1.1
 Twisted==17.5.0
 urllib3==1.22

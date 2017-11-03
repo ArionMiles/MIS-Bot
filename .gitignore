@@ -112,3 +112,5 @@ test\.bat
 *.ini
 
 *.db
+
+/misbot/

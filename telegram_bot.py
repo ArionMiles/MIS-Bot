@@ -39,19 +39,18 @@ def start(bot, update):
     intro_message = "Hi! I'm a Telegram Bot for MIS.\
     \nMy source code lives at [Github.](https://github.com/ArionMiles/MIS-Bot)" + "👨‍💻" \
     "\nTo start using my services, please send me your MIS credentials in this format: \
-    \n\n`PID password` \
+    \n\n`Student-ID password` \
     \n(in a single line, separated by a space)\
     \n\nUse /cancel to abort.\
     \nUse /help to learn more."
     bot.sendMessage(chat_id=update.message.chat_id, text=intro_message, parse_mode='markdown',\
         disable_web_page_preview=True)
-
     return CREDENTIALS
 
 def register(bot, update):
     """Let all users register with their credentials."""
     messageContent = "Okay, send me your MIS credentials in this format: \
-    \n`PID password` \
+    \n`Student-ID password` \
     \n(in a single line, separated by a space)\
     \n\nUse /cancel to abort."
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
@@ -67,7 +66,7 @@ def attendance(bot, job):
         bot.sendMessage(chat_id=update.message.chat_id, text="📋 " + "Unregistered! Please use /register to start.")
         return
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
-    PID = userChat.PID
+    Student_ID = userChat.PID
     password = userChat.password
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
 
@@ -81,7 +80,7 @@ def attendance(bot, job):
         'FEED_URI' : 'attendance_output.json'
         })
 
-    d = runner.crawl(MySpider, USERNAME=PID, PASSWORD=password)
+    d = runner.crawl(MySpider, USERNAME=Student_ID, PASSWORD=password)
     d.addBoth(lambda _: reactor.stop())
     reactor.run(installSignalHandlers=0)
 
@@ -172,10 +171,10 @@ def credentials(bot, update):
     chatID = update.message.chat_id
     #If message contains less or more than 2 arguments, send message and stop. 
     try:
-        PID, passwd = update.message.text.split()
+        Student_ID, passwd = update.message.text.split()
     except ValueError:
         bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
-        update.message.reply_text("Oops, you made a mistake! You must send the PID and password\
+        update.message.reply_text("Oops, you made a mistake! You must send the Student_ID and password\
             in a single line, separated by a space.")
         return
 
@@ -183,12 +182,12 @@ def credentials(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
         return ConversationHandler.END
 
-    logger.info("Creds: Username %s , Password: %s" % (PID, passwd))
+    logger.info("Creds: Username %s , Password: %s" % (Student_ID, passwd))
     
-    # Create an object of Class <Chat> and store PID, password, and Telegeram
+    # Create an object of Class <Chat> and store Student_ID, password, and Telegeram
     # User ID, Add it to the database, commit it to the database. 
 
-    userChat = Chat(PID  = PID, password = passwd, chatID = chatID)
+    userChat = Chat(PID = Student_ID, password = passwd, chatID = chatID)
     db_session.add(userChat)
     db_session.commit()
 

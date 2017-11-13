@@ -3,6 +3,26 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
 
+"""
+Chat --> Subject --> Attendance
+One      Many        Many
+
+- Making New Chats
+    c = Chat(PID, password, chatId)
+
+- Adding subject to a chat object 'c'
+    s = Subject(SubjName)
+    c.subjects.append(s)
+    db_session.commit()
+
+- Adding an attendance to subject 's' of chat 'c'
+    a = Attendance(Value, date=datetime.datetime.utcnow())
+    s = c.subjects.query.filter_by(name=SubjName)
+    s.attendances.append(a)
+    db_session.commit()
+
+"""
+
 class Attendance(Base):
     __tablename__ = 'attendances'
     id = Column(Integer, primary_key = True)

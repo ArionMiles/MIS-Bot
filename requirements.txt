@@ -23,6 +23,7 @@ pyOpenSSL==17.3.0
 python-telegram-bot==8.0
 queuelib==1.4.2
 Scrapy==1.4.0
+scrapy-splash==0.7.2
 service-identity==17.0.0
 six==1.10.0
 SQLAlchemy==1.1.14

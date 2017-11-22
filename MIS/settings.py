@@ -55,6 +55,21 @@ ROBOTSTXT_OBEY = False
 #DOWNLOADER_MIDDLEWARES = {
 #    'MIS.middlewares.MyCustomDownloaderMiddleware': 543,
 #}
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy_splash.SplashCookiesMiddleware': 723,
+    'scrapy_splash.SplashMiddleware': 725,
+    'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+}
+
+SPLASH_URL = 'http://104.131.110.80:8050'
+
+SPIDER_MIDDLEWARES = {
+    'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
+}
+
+DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
+
+
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html
@@ -69,8 +84,9 @@ ITEM_PIPELINES = {
 }
 
 FEED_EXPORTERS = {
-    'json': 'scrapy.contrib.exporter.JsonItemExporter',
+    'json': 'scrapy.exporters.JsonItemExporter',
 }
+
 FEED_FORMAT = 'json'
 FEED_URI = "attendance_output.json"
 

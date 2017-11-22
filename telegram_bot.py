@@ -10,6 +10,7 @@ from twisted.internet import reactor
 from scrapy import cmdline
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 from MIS.spiders.moodle_spider import MySpider
+from MIS.spiders.results_spider import ResultsSpider
 from scrapy.utils.project import get_project_settings
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
@@ -145,6 +146,38 @@ def attendance(bot, job):
 def fetch_attendance(bot, update, job_queue):
     updater.job_queue.run_once(attendance, 0, context=update)
 
+def results(bot, job):
+    '''Fetch Unit Test results from the Aldel MIS'''
+    update = job.context
+    # Get chatID and user details based on chatID
+    chatID = update.message.chat_id
+    if not Chat.query.filter(Chat.chatID == chatID).first():
+        bot.sendMessage(chat_id=update.message.chat_id, text="📋 " + "Unregistered! Please use /register to start.")
+        return
+    userChat = Chat.query.filter(Chat.chatID == chatID).first()
+    Student_ID = userChat.PID
+    password = userChat.password
+    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
+
+
+    configure_logging({'LOG_FORMAT': '%(levelname)s: %(message)s'})
+    runner = CrawlerRunner()
+    d = runner.crawl(ResultsSpider, USERNAME=Student_ID, PASSWORD=password)
+    d.addBoth(lambda _: reactor.stop())
+    reactor.run(installSignalHandlers=0)
+
+    bot.send_photo(chat_id=update.message.chat_id, photo=open('{}.png'.format(Student_ID),'rb'), \
+        caption='Test Report for {}'.format(Student_ID))
+
+    def stop_and_restart():
+        """Gracefully stop the Updater and replace the current process with a new one"""
+        updater.stop()
+        os.execl(sys.executable, sys.executable, *sys.argv)
+    Thread(target=stop_and_restart).start()
+
+def fetch_results(bot, update, job_queue):
+    updater.job_queue.run_once(results, 0, context=update)
+
 def bunk_lec(bot, update, args):
     """Calculate drop/rise in attendance if you bunk some lectures."""
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
@@ -221,13 +254,14 @@ def unknown(bot, update):
 def help(bot, update):
     helpText = "1. /register - Register yourself\
                 \n2. /attendance - Fetch attendance from the MIS website.\
-                \n3. /bunk - Calculate % drop/rise.\
+                \n3. /results - Fetch unit test results\
+                \n4. /bunk - Calculate % drop/rise.\
                 \n`usage: /bunk x y`\
                 \nwhere `x = No. of lectures to bunk` \n`y = no. of lectures conducted on that day`\
-                \n4. /until80 - No. of lectures to attend consecutively until attendance is 80%\
-                \n5. /cancel - Cancel registration.\
-                \n6. /delete - Delete your credentials.\
-                \n7. /tips - Random tips."
+                \n5. /until80 - No. of lectures to attend consecutively until attendance is 80%\
+                \n6. /cancel - Cancel registration.\
+                \n7. /delete - Delete your credentials.\
+                \n8. /tips - Random tips."
     bot.sendMessage(chat_id=update.message.chat_id, text=helpText, parse_mode='markdown')
 
 def tips(bot, update):
@@ -258,6 +292,7 @@ def main():
     # Handlers
     start_handler = CommandHandler('start', start)
     attendance_handler = CommandHandler('attendance', fetch_attendance, pass_job_queue=True)
+    results_handler = CommandHandler('results', fetch_results, pass_job_queue=True)
     bunk_handler = CommandHandler('bunk', bunk_lec, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
     delete_handler = CommandHandler('delete', delete)
@@ -269,6 +304,7 @@ def main():
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(delete_handler)
     dispatcher.add_handler(attendance_handler)
+    dispatcher.add_handler(results_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)
     dispatcher.add_handler(help_handler)

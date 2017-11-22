@@ -7,6 +7,8 @@
 I created this bot as a means to avoid Defaulter's List, and I hope this bot can help others avoid it, too. The bot currently lives on my raspberry pi, but I intend to shift it to a cloud service, like Heroku or Azure very soon. 
 
 ## Flowchart
+TO BE ADDED
+
 ## Features
   * **Bunk Calculator**
   

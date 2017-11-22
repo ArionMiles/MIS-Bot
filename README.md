@@ -41,8 +41,6 @@ I created this bot as a means to avoid Defaulter's List, and I hope this bot can
 
     Fetch results of Class Tests. Uses scrapy-splash library.
 
-## Usage
-
 # Contributors
  * [Arush Ahuja (arush15june)](https://github.com/arush15june)
  * [Vikas Yadav (v1k45)](https://github.com/v1k45)

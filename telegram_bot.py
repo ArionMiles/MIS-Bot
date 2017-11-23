@@ -161,7 +161,15 @@ def results(bot, job):
 
 
     configure_logging({'LOG_FORMAT': '%(levelname)s: %(message)s'})
-    runner = CrawlerRunner(get_project_settings())
+    runner = CrawlerRunner({
+        'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
+                                   'scrapy_splash.SplashMiddleware': 725,
+                                   'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
+
+        'SPLASH_URL':'YOUR_SPLASH_URL_HERE',
+        'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
+        'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
+        })
     d = runner.crawl(ResultsSpider, USERNAME=Student_ID, PASSWORD=password)
     d.addBoth(lambda _: reactor.stop())
     reactor.run(installSignalHandlers=0)

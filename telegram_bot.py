@@ -157,17 +157,17 @@ def results(bot, job):
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
     Student_ID = userChat.PID
     password = userChat.password
-    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
+    bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
 
 
     configure_logging({'LOG_FORMAT': '%(levelname)s: %(message)s'})
-    runner = CrawlerRunner()
+    runner = CrawlerRunner(get_project_settings())
     d = runner.crawl(ResultsSpider, USERNAME=Student_ID, PASSWORD=password)
     d.addBoth(lambda _: reactor.stop())
     reactor.run(installSignalHandlers=0)
 
-    bot.send_photo(chat_id=update.message.chat_id, photo=open('{}.png'.format(Student_ID),'rb'), \
-        caption='Test Report for {}'.format(Student_ID))
+    bot.send_photo(chat_id=update.message.chat_id, photo=open("{}.png".format(Student_ID),'rb'),
+                   caption='Test Report for {}'.format(Student_ID))
 
     def stop_and_restart():
         """Gracefully stop the Updater and replace the current process with a new one"""

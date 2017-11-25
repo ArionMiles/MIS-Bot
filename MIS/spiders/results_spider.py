@@ -1,7 +1,16 @@
 import base64
+from configparser import ConfigParser
+from multiprocessing import Process, Queue
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
 from scrapy_splash import SplashRequest
+import scrapy.crawler as crawler
+from twisted.internet import reactor
+
+# Read settings from config file
+config = ConfigParser()
+config.read('creds.ini')
+SPLASH_INSTANCE = config.get('BOT', 'SPLASH_INSTANCE')
 
 class ResultsSpider(InitSpider):
     name = 'results'
@@ -28,7 +37,7 @@ class ResultsSpider(InitSpider):
         """Check the response returned by a login request to see if we are
         successfully logged in.
         """
-        if self.USERNAME in response.body:
+        if self.USERNAME in response.body.decode():
             self.log("Login Successful!")
             # Now the crawling can begin..
             return self.initialized()
@@ -50,3 +59,33 @@ class ResultsSpider(InitSpider):
         filename = '{}.png'.format(self.USERNAME)
         with open(filename, 'wb') as f:
             f.write(imgdata)
+
+def scrape_results(USERNAME, PASSWORD):
+    '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''
+    def f(q):
+        try:
+            runner = crawler.CrawlerRunner({
+        'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
+                                   'scrapy_splash.SplashMiddleware': 725,
+                                   'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
+
+        'SPLASH_URL':SPLASH_INSTANCE,
+        'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
+        'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
+        })
+            deferred = runner.crawl(ResultsSpider, USERNAME=USERNAME, PASSWORD=PASSWORD)
+            deferred.addBoth(lambda _: reactor.stop())
+            reactor.run()
+            q.put(None)
+        except Exception as e:
+            q.put(e)
+
+    q = Queue()
+    p = Process(target=f, args=(q,))
+    p.start()
+    result = q.get()
+    p.join()
+
+    if result is not None:
+        raise result
+

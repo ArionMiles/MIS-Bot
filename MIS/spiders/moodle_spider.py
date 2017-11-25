@@ -2,6 +2,9 @@
 import os
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
+import scrapy.crawler as crawler
+from twisted.internet import reactor
+from multiprocessing import Process, Queue
 from ..items import LecturesItem, PracticalsItem
 
 xpaths=[
@@ -23,8 +26,8 @@ xpaths=[
     {"name": "Overall_prac", "query": "//label/h2/", "is_practical":True}
 ]
 
-class MySpider(InitSpider):
-    name = 'mis'
+class AttendanceSpider(InitSpider):
+    name = 'attendance'
     allowed_domains = ['report.aldel.org']
     login_page = 'http://report.aldel.org/student_page.php'
     start_urls = ['http://report.aldel.org/student/attendance_report.php']
@@ -48,7 +51,7 @@ class MySpider(InitSpider):
         """Check the response returned by a login request to see if we are
         successfully logged in.
         """
-        if self.USERNAME in response.body:
+        if self.USERNAME in response.body.decode():
             self.log("Login Successful!")
             # Now the crawling can begin..
             return self.initialized()
@@ -86,3 +89,27 @@ class MySpider(InitSpider):
         yield LecturesItem(**lecture_kwargs)
 
         yield PracticalsItem(**practicals_kwargs)
+
+def scrape_attendance(USERNAME, PASSWORD):
+    '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''
+    def f(q):
+        try:
+            runner = crawler.CrawlerRunner({
+        'FEED_FORMAT': 'json',
+        'FEED_URI' : 'attendance_output.json'
+        })
+            deferred = runner.crawl(AttendanceSpider, USERNAME=USERNAME, PASSWORD=PASSWORD)
+            deferred.addBoth(lambda _: reactor.stop())
+            reactor.run()
+            q.put(None)
+        except Exception as e:
+            q.put(e)
+
+    q = Queue()
+    p = Process(target=f, args=(q,))
+    p.start()
+    result = q.get()
+    p.join()
+
+    if result is not None:
+        raise result

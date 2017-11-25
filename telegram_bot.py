@@ -1,27 +1,20 @@
 # -*- coding: utf-8 -*-
 import logging
-import os
 import json
 import textwrap
-import sys
-import ConfigParser
+from configparser import ConfigParser
 import random
-from twisted.internet import reactor
-from scrapy import cmdline
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
-from MIS.spiders.moodle_spider import MySpider
-from MIS.spiders.results_spider import ResultsSpider
-from scrapy.utils.project import get_project_settings
-from scrapy.crawler import CrawlerRunner
-from scrapy.utils.log import configure_logging
-from threading import Thread
+from MIS.spiders.moodle_spider import scrape_attendance
+from MIS.spiders.results_spider import scrape_results
 
 from mis_functions import bunk_lecture, until80
 from database import init_db, db_session
 from models import Chat
 
+
 # Read settings from config file
-config = ConfigParser.RawConfigParser()
+config = ConfigParser()
 config.read('creds.ini')
 TOKEN = config.get('BOT', 'TOKEN')
 updater = Updater(TOKEN)
@@ -75,15 +68,8 @@ def attendance(bot, job):
     with open('attendance_output.json', 'w') as att:
         pass
 
-    configure_logging({'LOG_FORMAT': '%(levelname)s: %(message)s'})
-    runner = CrawlerRunner({
-        'FEED_FORMAT': 'json',
-        'FEED_URI' : 'attendance_output.json'
-        })
-
-    d = runner.crawl(MySpider, USERNAME=Student_ID, PASSWORD=password)
-    d.addBoth(lambda _: reactor.stop())
-    reactor.run(installSignalHandlers=0)
+    #Run AttendanceSpider
+    scrape_attendance(Student_ID, password)
 
     with open("attendance_output.json", 'r') as f:
         a_r = json.loads(f.read())
@@ -136,13 +122,6 @@ def attendance(bot, job):
     with open('old_report.json', 'w') as old:
         json.dump(a_r, old, indent=4)
 
-    #Restart the bot to counter ReactorNotRestartable error.
-    def stop_and_restart():
-        """Gracefully stop the Updater and replace the current process with a new one"""
-        updater.stop()
-        os.execl(sys.executable, sys.executable, *sys.argv)
-    Thread(target=stop_and_restart).start()
-
 def fetch_attendance(bot, update, job_queue):
     updater.job_queue.run_once(attendance, 0, context=update)
 
@@ -159,29 +138,14 @@ def results(bot, job):
     password = userChat.password
     bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
 
+    #Run ResultsSpider
+    scrape_results(Student_ID, password)
 
-    configure_logging({'LOG_FORMAT': '%(levelname)s: %(message)s'})
-    runner = CrawlerRunner({
-        'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
-                                   'scrapy_splash.SplashMiddleware': 725,
-                                   'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
-
-        'SPLASH_URL':'YOUR_SPLASH_URL_HERE',
-        'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
-        'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
-        })
-    d = runner.crawl(ResultsSpider, USERNAME=Student_ID, PASSWORD=password)
-    d.addBoth(lambda _: reactor.stop())
-    reactor.run(installSignalHandlers=0)
-
-    bot.send_photo(chat_id=update.message.chat_id, photo=open("{}.png".format(Student_ID),'rb'),
+    try:
+    	bot.send_photo(chat_id=update.message.chat_id, photo=open("{}.png".format(Student_ID),'rb'),
                    caption='Test Report for {}'.format(Student_ID))
-
-    def stop_and_restart():
-        """Gracefully stop the Updater and replace the current process with a new one"""
-        updater.stop()
-        os.execl(sys.executable, sys.executable, *sys.argv)
-    Thread(target=stop_and_restart).start()
+    except IOError:
+    	bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
 
 def fetch_results(bot, update, job_queue):
     updater.job_queue.run_once(results, 0, context=update)
@@ -243,6 +207,7 @@ def delete(bot, update):
         return
     userChat = Chat.query.filter(Chat.chatID == chatID)
     userChat.delete()
+    db_session.commit()
     bot.sendMessage(chat_id=update.message.chat_id, text="Deleted User!")
 
 def cancel(bot, update):
@@ -320,7 +285,7 @@ def main():
     dispatcher.add_handler(unknown_message)
 
     #Long polling
-    updater.start_polling(clean=True)
+    updater.start_polling(clean=True, poll_interval=5)
     updater.idle()
 
 if __name__ == '__main__':

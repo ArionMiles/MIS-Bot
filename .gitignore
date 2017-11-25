@@ -115,3 +115,9 @@ test\.bat
 
 /misbot/
 Untitled Diagram\.xml
+
+venv/
+
+scrapyd-client/
+
+setup\.py

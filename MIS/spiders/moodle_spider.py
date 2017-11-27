@@ -33,7 +33,7 @@ class AttendanceSpider(InitSpider):
     start_urls = ['http://report.aldel.org/student/attendance_report.php']
 
     def __init__(self, USERNAME, PASSWORD, *args, **kwargs):
-       super(MySpider, self).__init__(*args, **kwargs)
+       super(AttendanceSpider, self).__init__(*args, **kwargs)
        self.USERNAME = USERNAME
        self.PASSWORD = PASSWORD
     

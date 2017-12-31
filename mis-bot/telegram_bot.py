@@ -5,8 +5,8 @@ import textwrap
 from configparser import ConfigParser
 import random
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
-from MIS.spiders.moodle_spider import scrape_attendance
-from MIS.spiders.results_spider import scrape_results
+from scraper.spiders.moodle_spider import scrape_attendance
+from scraper.spiders.results_spider import scrape_results
 
 from mis_functions import bunk_lecture, until80
 from database import init_db, db_session

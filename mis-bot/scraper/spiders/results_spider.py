@@ -56,7 +56,7 @@ class ResultsSpider(InitSpider):
     def parse_result(self, response):
         '''Store the screenshot'''
         imgdata = base64.b64decode(response.data['png'])
-        filename = '{}.png'.format(self.USERNAME)
+        filename = '{}_tests.png'.format(self.USERNAME)
         with open(filename, 'wb') as f:
             f.write(imgdata)
 

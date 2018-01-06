@@ -11,13 +11,13 @@ from scrapy import Item, Field
 class LecturesItem(Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    AM = Field()
+    '''AM = Field()
     AP = Field()
     AC = Field()
     EM = Field()
     BEE = Field()
     EVS = Field()
-    Overall = Field()
+    Overall = Field()'''
     total_lec_conducted=Field()
     total_lec_attended=Field()
 

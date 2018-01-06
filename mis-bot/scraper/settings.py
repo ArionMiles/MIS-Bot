@@ -11,8 +11,8 @@
 
 BOT_NAME = 'MIS'
 
-SPIDER_MODULES = ['MIS.spiders']
-NEWSPIDER_MODULE = 'MIS.spiders'
+SPIDER_MODULES = ['scraper.spiders']
+NEWSPIDER_MODULE = 'scraper.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -61,7 +61,7 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
 }
 
-SPLASH_URL = 'SPLASH_URL_HERE'
+SPLASH_URL = 'http://139.59.73.2:8050'
 
 SPIDER_MIDDLEWARES = {
     'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -80,7 +80,7 @@ DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'MIS.pipelines.MisPipeline': 300,
+    'scraper.pipelines.MisPipeline': 300,
 }
 
 FEED_EXPORTERS = {

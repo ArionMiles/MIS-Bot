@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import logging
 import json
 import textwrap
@@ -71,7 +71,12 @@ def attendance(bot, job):
     #Run AttendanceSpider
     scrape_attendance(Student_ID, password)
 
-    with open("attendance_output.json", 'r') as f:
+    try:
+        bot.send_photo(chat_id=update.message.chat_id, photo=open("{}_attendance.png".format(Student_ID),'rb'),
+                   caption='Attendance Report for {}'.format(Student_ID))
+    except IOError:
+        bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
+    '''with open("attendance_output.json", 'r') as f:
         a_r = json.loads(f.read())
         #Lectures
         AM = a_r[0]['AM']
@@ -121,6 +126,7 @@ def attendance(bot, job):
     #Write contents of current report to old_report.json for difference() function
     with open('old_report.json', 'w') as old:
         json.dump(a_r, old, indent=4)
+    '''
 
 def fetch_attendance(bot, update, job_queue):
     updater.job_queue.run_once(attendance, 0, context=update)
@@ -142,7 +148,7 @@ def results(bot, job):
     scrape_results(Student_ID, password)
 
     try:
-    	bot.send_photo(chat_id=update.message.chat_id, photo=open("{}.png".format(Student_ID),'rb'),
+    	bot.send_photo(chat_id=update.message.chat_id, photo=open("{}_tests.png".format(Student_ID),'rb'),
                    caption='Test Report for {}'.format(Student_ID))
     except IOError:
     	bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')

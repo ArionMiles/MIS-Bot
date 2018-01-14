@@ -125,8 +125,8 @@ def scrape_attendance(USERNAME, PASSWORD):
     def f(q):
         try:
             runner = crawler.CrawlerRunner({
-        'FEED_FORMAT': 'json',
-        'FEED_URI' : 'attendance_output.json',
+        'ITEM_PIPELINES': {'scraper.pipelines.AttendancePipeline': 300,},
+        
         'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
                                    'scrapy_splash.SplashMiddleware': 725,
                                    'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},

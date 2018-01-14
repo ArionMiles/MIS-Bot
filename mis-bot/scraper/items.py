@@ -21,7 +21,7 @@ class LecturesItem(Item):
     total_lec_conducted=Field()
     total_lec_attended=Field()
 
-class PracticalsItem(Item):
+'''class PracticalsItem(Item):
     AC_prac = Field()
     AM_prac = Field()
     AP_prac = Field()
@@ -29,3 +29,4 @@ class PracticalsItem(Item):
     Workshop = Field()
     EM_prac = Field()
     Overall_prac=Field()
+'''

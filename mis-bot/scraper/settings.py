@@ -80,7 +80,7 @@ DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'scraper.pipelines.MisPipeline': 300,
+    'scraper.pipelines.AttendancePipeline': 300,
 }
 
 FEED_EXPORTERS = {

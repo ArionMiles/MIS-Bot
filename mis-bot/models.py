@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
-from datetime import datetime
+#from datetime import datetime
 from database import Base
 
 """
@@ -26,18 +26,20 @@ One      Many        Many
 class Attendance(Base):
     __tablename__ = 'attendances'
     id = Column(Integer, primary_key = True)
-    subject_id = Column(Integer, ForeignKey('subjects.id'))
-    date = Column(DateTime, default=datetime.utcnow)
-    value = Column(Integer, default=0)
+    total_lec_attended = Column(Integer, default=0)
+    total_lec_conducted = Column(Integer, default=0)
+    #date = Column(DateTime, default=datetime.utcnow)
+    #value = Column(Integer, default=0)
 
-    def __init__(self, value, date=datetime.utcnow()):
-        self.value = value
-        self.date = date
+    def __init__(self, id=None, total_lec_attended=None, total_lec_conducted=None):
+        self.id = id
+        self.total_lec_attended = total_lec_attended
+        self.total_lec_conducted = total_lec_conducted
 
     def __repr__(self):
-        return '<Attendance {} Date: {} Subject: {}>'.format(self.value, self.date, self.subject_id)
+        return '<Attendance Data: {} total_lec_attended: {} total_lec_conducted: {}>'.format(self.id, self.total_lec_attended, self.total_lec_conducted)
 
-class Subject(Base):
+'''class Subject(Base):
     __tablename__ = 'subjects'
     id = Column(Integer, primary_key = True)
     chat_id = Column(Integer, ForeignKey('chats.id'))
@@ -49,7 +51,7 @@ class Subject(Base):
         
     def __repr__(self):
         return '<Subject {} chatID: {}>'.format(self.name, self.chat_id)    
-
+'''
 class Chat(Base):
     __tablename__ = 'chats'
     id = Column(Integer, primary_key=True)

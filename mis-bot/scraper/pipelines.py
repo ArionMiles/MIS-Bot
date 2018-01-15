@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from ..database import Base
 from ..database import init_db, db_session
 from ..models import Attendance
 

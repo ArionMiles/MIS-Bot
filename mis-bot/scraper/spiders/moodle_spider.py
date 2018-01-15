@@ -6,7 +6,7 @@ from scrapy.http import Request, FormRequest
 import scrapy.crawler as crawler
 from twisted.internet import reactor
 from multiprocessing import Process, Queue
-from ..items import LecturesItem, PracticalsItem
+from ..items import LecturesItem #, PracticalsItem
 from scrapy_splash import SplashRequest
 
 from configparser import ConfigParser

@@ -31,7 +31,7 @@ class Attendance(Base):
     #date = Column(DateTime, default=datetime.utcnow)
     #value = Column(Integer, default=0)
 
-    def __init__(self, id=None, total_lec_attended=None, total_lec_conducted=None):
+    def __init__(self, id=None, total_lec_attended=0, total_lec_conducted=0):
         self.id = id
         self.total_lec_attended = total_lec_attended
         self.total_lec_conducted = total_lec_conducted

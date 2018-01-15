@@ -23,8 +23,8 @@ xpaths=[
     {"name": "BEE", "query": "//table[1]/tr[7]/td[4]/", "is_practical":False},
     {"name": "EVS", "query": "//table[1]/tr[8]/td[4]/", "is_practical":False},
     {"name": "Overall", "query": "//center/h2/u//text()", "clean":lambda values: "".join(values).strip(), "check_for_red":False, "is_practical":False},
-    {"name": "total_lec_conducted", "query": "//table[1]/tr[last()]/td[2]/b/text()", "check_for_red":False, "is_practical":False, "is_practical":False},
-    {"name": "total_lec_attended", "query": "//table[1]/tr[last()]/td[3]/b/text()", "check_for_red": False, "is_practical":False, "is_practical":False},
+    {"name": "total_lec_conducted", "query": "//table[1]/tr[last()]/td[2]/b/text()", "check_for_red":False, "is_practical":False},
+    {"name": "total_lec_attended", "query": "//table[1]/tr[last()]/td[3]/b/text()", "check_for_red": False, "is_practical":False},
     {"name": "AC_prac", "query": "//table[2]/tr[2]/td[4]/", "is_practical":True},
     {"name": "AM_prac", "query": "//table[2]/tr[3]/td[4]/", "is_practical":True},
     {"name": "AP_prac", "query": "//table[2]/tr[4]/td[4]/", "is_practical":True},
@@ -125,16 +125,16 @@ def scrape_attendance(USERNAME, PASSWORD):
     def f(q):
         try:
             runner = crawler.CrawlerRunner({
-        'ITEM_PIPELINES': {'scraper.pipelines.AttendancePipeline': 300,},
-        
-        'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
-                                   'scrapy_splash.SplashMiddleware': 725,
-                                   'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
+                'ITEM_PIPELINES': {'scraper.pipelines.AttendancePipeline': 300,},
 
-        'SPLASH_URL':SPLASH_INSTANCE,
-        'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
-        'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
-        })
+                'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
+                                           'scrapy_splash.SplashMiddleware': 725,
+                                           'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
+
+                'SPLASH_URL':SPLASH_INSTANCE,
+                'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
+                'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
+            })
             deferred = runner.crawl(AttendanceSpider, USERNAME=USERNAME, PASSWORD=PASSWORD)
             deferred.addBoth(lambda _: reactor.stop())
             reactor.run()

@@ -58,7 +58,7 @@ class Chat(Base):
     PID = Column(String(100))
     password = Column(String(50))
     chatID = Column(String(512))
-    subjects = relationship('Subject', backref = 'chats')   
+    #subjects = relationship('Subject', backref = 'chats')   
 
     def __init__(self, PID, password, chatID):
         self.PID = PID

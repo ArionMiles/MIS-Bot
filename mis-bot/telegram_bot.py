@@ -9,8 +9,8 @@ from scraper.spiders.moodle_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 
 from mis_functions import bunk_lecture, until80
-from scraper.database import init_db, db_session
-from scraper.models import Chat
+from database import init_db, db_session
+from models import Chat
 
 
 # Read settings from config file

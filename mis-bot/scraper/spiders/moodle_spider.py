@@ -81,7 +81,10 @@ class AttendanceSpider(InitSpider):
 
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
-        
+        yield LecturesItem(
+            total_lec_conducted = response.xpath(xpaths['total_lec_conducted']).extract()[0].strip(),
+            total_lec_attended = response.xpath(xpaths['total_lec_attended']).extract()[0].strip()
+            )
 
     def parse_result(self, response):
         '''Store the screenshot'''
@@ -90,10 +93,6 @@ class AttendanceSpider(InitSpider):
         with open(filename, 'wb') as f:
             f.write(imgdata)
 
-        yield LecturesItem(
-            total_lec_conducted = response.xpath(xpaths['total_lec_conducted']).extract()[0].strip(),
-            total_lec_attended = response.xpath(xpaths['total_lec_attended']).extract()[0].strip()
-            )
 '''    def parse(self, response):
         #Scrape attendance data from page
 

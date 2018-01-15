@@ -121,7 +121,3 @@ venv/
 scrapyd-client/
 
 setup\.py
-
-mis-bot/models\.bak\.py
-
-mis-bot/database\.bak\.py

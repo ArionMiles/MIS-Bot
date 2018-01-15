@@ -10,9 +10,11 @@ from ..models import Attendance
 
 class AttendancePipeline(object):
     def process_item(self, item, spider):
-    	# create a new SQL Alchemy object and add to the db session
+        #Initiate DB
+        init_db()
+        # create a new SQL Alchemy object and add to the db session
         record = Attendance(total_lec_attended=item['total_lec_attended'],
-        	total_lec_conducted=item['total_lec_conducted'])
+                            total_lec_conducted=item['total_lec_conducted'])
         db_session.add(record)
         db_session.commit()
         return item

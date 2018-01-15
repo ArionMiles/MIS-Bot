@@ -15,7 +15,12 @@ config = ConfigParser()
 config.read('creds.ini')
 SPLASH_INSTANCE = config.get('BOT', 'SPLASH_INSTANCE')
 
-xpaths=[
+xpaths = {
+    'total_lec_conducted': '//table[1]/tr[last()]/td[2]/b/text()',
+    'total_lec_attended': '//table[1]/tr[last()]/td[3]/b/text()',
+}
+
+'''xpaths=[
     {"name": "AM", "query": "//table[1]/tr[3]/td[4]/", "is_practical":False},
     {"name": "AP", "query": "//table[1]/tr[4]/td[4]/", "is_practical":False},
     {"name": "AC", "query": "//table[1]/tr[5]/td[4]/", "is_practical":False},
@@ -32,7 +37,7 @@ xpaths=[
     {"name": "Workshop", "query": "//table[2]/tr[6]/td[4]/", "is_practical":True},
     {"name": "EM_prac", "query": "//table[2]/tr[7]/td[4]/", "is_practical":True},
     {"name": "Overall_prac", "query": "//label/h2/", "is_practical":True}
-]
+]'''
 
 class AttendanceSpider(InitSpider):
     name = 'attendance'

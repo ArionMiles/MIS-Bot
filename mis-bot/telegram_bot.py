@@ -62,7 +62,7 @@ def attendance(bot, job):
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
     Student_ID = userChat.PID
     password = userChat.password
-    bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo ')
+    bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
 
     '''#Empty the previous report contents
     with open('attendance_output.json', 'w') as att:

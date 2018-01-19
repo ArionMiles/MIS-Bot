@@ -64,6 +64,30 @@ If you wish to run your own instance of the bot, follow the below steps.
  5. You must run a splash server (on a linux machine preferrably) to be able to use the `/results` command, since it requires splash to generate the screenshot.
  5. To test run the bot, cd to the project dir and run `python telegram_bot.py`
  6. If everything works fine, you should create a systemd service (for a linux machine) so that it'll run on startup. To get an idea of how to set up a systemd service, [read this article](https://www.raspberrypi-spy.co.uk/2015/10/how-to-autorun-a-python-script-on-boot-using-systemd/) (it's same for all debian based distros)
+    This is my project's systemd service:
+
+    ```
+    [Unit]
+    Description=Aldel Bot
+    After=network.target
+
+    [Service]
+    Type=idle
+    WorkingDirectory=/home/Projects/MIS-Bot/mis-bot/
+    ExecStart=/home/Projects/venv/bin/python telegram_bot.py
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+    Save in `/lib/systemd/system/` as `bot.service`
+
+    Enable: `sudo systemctl enable bot.service`
+
+    Start: `sudo systemctl start bot`
+
+    Restart: `sudo systemctl restart bot`
+    
+    Status: `sudo systemctl status bot`
 
 # Roadmap
  * ~Attendance scraper~

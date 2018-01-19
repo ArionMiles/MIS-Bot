@@ -70,7 +70,7 @@ If you wish to run your own instance of the bot, follow the below steps.
  * ~Bunk/Until80 functions~
  * ~Allow registration~
  * ~Results scraper~
- * Store attendance data in a database
+ * ~Store attendance data in a database~
  * Use scrapyd to deploy spiders as opposed to [the current solution](https://stackoverflow.com/a/43661172)
  * Create an API to execute spiders.
  * Create an Android application

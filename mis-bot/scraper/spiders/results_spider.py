@@ -35,8 +35,7 @@ class ResultsSpider(InitSpider):
 
     def check_login_response(self, response):
         """Check the response returned by a login request to see if we are
-        successfully logged in.
-        """
+        successfully logged in."""
         if self.USERNAME in response.body.decode():
             self.log("Login Successful!")
             # Now the crawling can begin..
@@ -88,4 +87,3 @@ def scrape_results(USERNAME, PASSWORD):
 
     if result is not None:
         raise result
-

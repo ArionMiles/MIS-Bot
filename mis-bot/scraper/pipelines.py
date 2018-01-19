@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ..database import init_db, db_session
-from ..models import Attendance
+from scraper.database import init_db, db_session
+from scraper.models import Attendance
 
 # Define your item pipelines here
 #
@@ -14,7 +14,16 @@ class AttendancePipeline(object):
         init_db()
         # create a new SQL Alchemy object and add to the db session
         record = Attendance(total_lec_attended=item['total_lec_attended'],
-                            total_lec_conducted=item['total_lec_conducted'])
-        db_session.add(record)
-        db_session.commit()
+                            total_lec_conducted=item['total_lec_conducted'],
+                            chatID=spider.chatID)
+
+        """if not Attendance.query.filter(Attendance.chatID == spider.chatID).first():
+        	record = Attendance(total_lec_attended=item['total_lec_attended'],
+                            total_lec_conducted=item['total_lec_conducted'],
+                            chatID=spider.chatID) 
+        	db_session.add(record)
+        	db_session.commit()
+        else:
+        """
+
         return item

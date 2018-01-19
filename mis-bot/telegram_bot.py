@@ -104,7 +104,7 @@ def bunk_lec(bot, update, args):
     """Calculate drop/rise in attendance if you bunk some lectures."""
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     if len(args) == 2:
-        r = bunk_lecture(int(args[0]), int(args[1]))
+        r = bunk_lecture(int(args[0]), int(args[1]), update.message.chat_id)
         messageContent = 'Projected attendance = ' + str(r) + '%'
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     else:
@@ -114,10 +114,10 @@ def bunk_lec(bot, update, args):
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%"""
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
-    if int(until80()) <0:
+    if int(until80(update.message.chat_id)) <0:
         bot.sendMessage(chat_id=update.message.chat_id, text="Your attendance is already over 80. Relax.")
     else:
-        messageContent = 'No. of lectures to attend: ' + str(until80())
+        messageContent = 'No. of lectures to attend: ' + str(until80(update.message.chat_id))
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def credentials(bot, update):

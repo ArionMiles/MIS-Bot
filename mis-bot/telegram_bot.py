@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import logging
-import json
 import textwrap
 from configparser import ConfigParser
 import random
@@ -9,9 +8,8 @@ from scraper.spiders.moodle_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 
 from mis_functions import bunk_lecture, until80
-from database import init_db, db_session
-from models import Chat
-
+from scraper.database import init_db, db_session
+from scraper.models import Chat
 
 # Read settings from config file
 config = ConfigParser()
@@ -31,7 +29,7 @@ CREDENTIALS= 0
 def start(bot, update):
     """Initial message sent to all users."""
     intro_message = "Hi! I'm a Telegram Bot for MIS.\
-    \nMy source code lives at [Github.](https://github.com/ArionMiles/MIS-Bot)" + "👨‍💻" \
+    \nMy source code lives at [Github.](https://github.com/ArionMiles/MIS-Bot) 👨‍💻" \
     "\nTo start using my services, please send me your MIS credentials in this format: \
     \n\n`Student-ID password` \
     \n(in a single line, separated by a space)\
@@ -57,70 +55,22 @@ def attendance(bot, job):
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
     if not Chat.query.filter(Chat.chatID == chatID).first():
-        bot.sendMessage(chat_id=update.message.chat_id, text="📋 " + "Unregistered! Please use /register to start.")
+        bot.sendMessage(chat_id=update.message.chat_id, text="📋 Unregistered! Please use /register to start.")
         return
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
     Student_ID = userChat.PID
     password = userChat.password
-    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
-
-    #Empty the previous report contents
-    with open('attendance_output.json', 'w') as att:
-        pass
+    bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
 
     #Run AttendanceSpider
-    scrape_attendance(Student_ID, password)
+    scrape_attendance(Student_ID, password, chatID)
 
-    with open("attendance_output.json", 'r') as f:
-        a_r = json.loads(f.read())
-        #Lectures
-        AM = a_r[0]['AM']
-        AP = a_r[0]['AP']
-        AC = a_r[0]['AC']
-        EM = a_r[0]['EM']
-        BEE = a_r[0]['BEE']
-        EVS = a_r[0]['EVS']
-        Overall = a_r[0]['Overall']
-        #Practicals
-        AM_prac = a_r[1]['AM_prac']
-        AC_prac = a_r[1]['AC_prac']
-        AP_prac = a_r[1]['AP_prac']
-        EM_prac = a_r[1]['EM_prac']
-        BEE_prac = a_r[1]['BEE_prac']
-        Workshop = a_r[1]['Workshop']
-        Overall_prac= a_r[1]['Overall_prac']
-        message_template = textwrap.dedent("""
-                LECTURES:
-                AM: {AM}
-                AP: {AP}
-                AC: {AC}
-                EM: {EM}
-                BEE: {BEE}
-                EVS: {EVS}
-                Overall: {Overall}
-
-                PRACTICALS:
-                AM: {AM_prac}
-                AC: {AC_prac}
-                AP: {AP_prac}
-                EM: {EM_prac}
-                BEE: {BEE_prac}
-                Workshop: {Workshop}
-                {Overall_prac}
-                """)
-        messageContent = message_template.format(AM=AM, AP=AP,
-                                             AC=AC, EM=EM, 
-                                             BEE=BEE, EVS=EVS,
-                                             Overall=Overall, AM_prac=AM_prac,
-                                             AC_prac=AC_prac, AP_prac=AP_prac,
-                                             EM_prac=EM_prac, BEE_prac=BEE_prac,
-                                             Workshop=Workshop, Overall_prac=Overall_prac)
-
-    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
-
-    #Write contents of current report to old_report.json for difference() function
-    with open('old_report.json', 'w') as old:
-        json.dump(a_r, old, indent=4)
+    try:
+        bot.send_photo(chat_id=update.message.chat_id, photo=open("{}_attendance.png".format(Student_ID),'rb'),
+                   caption='Attendance Report for {}'.format(Student_ID))
+    except IOError:
+        bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
+        logger.warning("Something went wrong! Check if the Splash server is up.")
 
 def fetch_attendance(bot, update, job_queue):
     updater.job_queue.run_once(attendance, 0, context=update)
@@ -131,7 +81,7 @@ def results(bot, job):
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
     if not Chat.query.filter(Chat.chatID == chatID).first():
-        bot.sendMessage(chat_id=update.message.chat_id, text="📋 " + "Unregistered! Please use /register to start.")
+        bot.sendMessage(chat_id=update.message.chat_id, text="📋 Unregistered! Please use /register to start.")
         return
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
     Student_ID = userChat.PID
@@ -142,7 +92,7 @@ def results(bot, job):
     scrape_results(Student_ID, password)
 
     try:
-    	bot.send_photo(chat_id=update.message.chat_id, photo=open("{}.png".format(Student_ID),'rb'),
+    	bot.send_photo(chat_id=update.message.chat_id, photo=open("{}_tests.png".format(Student_ID),'rb'),
                    caption='Test Report for {}'.format(Student_ID))
     except IOError:
     	bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
@@ -154,7 +104,7 @@ def bunk_lec(bot, update, args):
     """Calculate drop/rise in attendance if you bunk some lectures."""
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     if len(args) == 2:
-        r = bunk_lecture(int(args[0]), int(args[1]))
+        r = bunk_lecture(int(args[0]), int(args[1]), update.message.chat_id)
         messageContent = 'Projected attendance = ' + str(r) + '%'
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     else:
@@ -164,10 +114,10 @@ def bunk_lec(bot, update, args):
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%"""
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
-    if int(until80()) <0:
+    if int(until80(update.message.chat_id)) <0:
         bot.sendMessage(chat_id=update.message.chat_id, text="Your attendance is already over 80. Relax.")
     else:
-        messageContent = 'No. of lectures to attend: ' + str(until80())
+        messageContent = 'No. of lectures to attend: ' + str(until80(update.message.chat_id))
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def credentials(bot, update):
@@ -179,15 +129,14 @@ def credentials(bot, update):
         Student_ID, passwd = update.message.text.split()
     except ValueError:
         bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
-        update.message.reply_text("Oops, you made a mistake! You must send the Student_ID and password\
-            in a single line, separated by a space.")
+        update.message.reply_text("Oops, you made a mistake! You must send the Student_ID and password in a single line, separated by a space.")
         return
 
     if Chat.query.filter(Chat.chatID == chatID).first():
         bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
         return ConversationHandler.END
 
-    logger.info("Creds: Username %s , Password: %s" % (Student_ID, passwd))
+    logger.info("New Registration! Username: %s , " % (Student_ID))
     
     # Create an object of Class <Chat> and store Student_ID, password, and Telegeram
     # User ID, Add it to the database, commit it to the database. 
@@ -196,7 +145,8 @@ def credentials(bot, update):
     db_session.add(userChat)
     db_session.commit()
 
-    update.message.reply_text("💾 " + "Credentials stored for user: {}!".format(userChat.PID))
+    new_user = Student_ID[3:-4].title()
+    update.message.reply_text("Welcome {}!\nStart by checking your /attendance".format(new_user))
     return ConversationHandler.END
 
 def delete(bot, update):
@@ -208,7 +158,8 @@ def delete(bot, update):
     userChat = Chat.query.filter(Chat.chatID == chatID)
     userChat.delete()
     db_session.commit()
-    bot.sendMessage(chat_id=update.message.chat_id, text="Deleted User!")
+    bot.sendMessage(chat_id=update.message.chat_id, text="Your credentials have been deleted!")
+    logger.info("User credentials for %s deleted!" % (userChat.PID))
 
 def cancel(bot, update):
     """Cancel registration operation."""
@@ -218,8 +169,7 @@ def cancel(bot, update):
 def unknown(bot, update):
     """Respond to messages incomprehensible with some canned responses."""
     can = ["Seems like I'm not programmed to understand this yet.", "I'm not a fully functional A.I. ya know?", \
-    "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "I wish the creator imbued me with the ability to respond to your query.",\
-     "I'm afraid I can't do that.", "Damn you're dumb.", "Please don't abuse me now that you found this."]
+    "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "Damn you're dumb."]
     messageContent = random.choice(can)
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
@@ -285,7 +235,7 @@ def main():
     dispatcher.add_handler(unknown_message)
 
     #Long polling
-    updater.start_polling(clean=True, poll_interval=5)
+    updater.start_polling(clean=True)
     updater.idle()
 
 if __name__ == '__main__':

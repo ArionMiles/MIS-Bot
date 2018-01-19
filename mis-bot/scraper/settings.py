@@ -11,15 +11,32 @@
 
 BOT_NAME = 'MIS'
 
-SPIDER_MODULES = ['MIS.spiders']
-NEWSPIDER_MODULE = 'MIS.spiders'
-
-
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'MIS (+http://www.yourdomain.com)'
+SPIDER_MODULES = ['scraper.spiders']
+NEWSPIDER_MODULE = 'scraper.spiders'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
+
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy_splash.SplashCookiesMiddleware': 723,
+    'scrapy_splash.SplashMiddleware': 725,
+    'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+}
+
+SPLASH_URL = 'http://139.59.93.143:8050'
+
+SPIDER_MIDDLEWARES = {
+    'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
+}
+
+DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
+
+ITEM_PIPELINES = {
+    'scraper.pipelines.AttendancePipeline': 300,
+}
+
+# Crawl responsibly by identifying yourself (and your website) on the user-agent
+#USER_AGENT = 'MIS (+http://www.yourdomain.com)'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -55,20 +72,6 @@ ROBOTSTXT_OBEY = False
 #DOWNLOADER_MIDDLEWARES = {
 #    'MIS.middlewares.MyCustomDownloaderMiddleware': 543,
 #}
-DOWNLOADER_MIDDLEWARES = {
-    'scrapy_splash.SplashCookiesMiddleware': 723,
-    'scrapy_splash.SplashMiddleware': 725,
-    'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
-}
-
-SPLASH_URL = 'SPLASH_URL_HERE'
-
-SPIDER_MIDDLEWARES = {
-    'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-}
-
-DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
-
 
 
 # Enable or disable extensions
@@ -79,16 +82,6 @@ DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-ITEM_PIPELINES = {
-    'MIS.pipelines.MisPipeline': 300,
-}
-
-FEED_EXPORTERS = {
-    'json': 'scrapy.exporters.JsonItemExporter',
-}
-
-FEED_FORMAT = 'json'
-FEED_URI = "attendance_output.json"
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html

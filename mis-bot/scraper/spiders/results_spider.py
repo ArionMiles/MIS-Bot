@@ -35,8 +35,7 @@ class ResultsSpider(InitSpider):
 
     def check_login_response(self, response):
         """Check the response returned by a login request to see if we are
-        successfully logged in.
-        """
+        successfully logged in."""
         if self.USERNAME in response.body.decode():
             self.log("Login Successful!")
             # Now the crawling can begin..
@@ -56,7 +55,7 @@ class ResultsSpider(InitSpider):
     def parse_result(self, response):
         '''Store the screenshot'''
         imgdata = base64.b64decode(response.data['png'])
-        filename = '{}.png'.format(self.USERNAME)
+        filename = '{}_tests.png'.format(self.USERNAME)
         with open(filename, 'wb') as f:
             f.write(imgdata)
 
@@ -88,4 +87,3 @@ def scrape_results(USERNAME, PASSWORD):
 
     if result is not None:
         raise result
-

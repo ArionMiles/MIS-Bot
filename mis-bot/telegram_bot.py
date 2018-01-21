@@ -1,7 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
+from os import environ
 import logging
 import textwrap
-from configparser import ConfigParser
 import random
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 from scraper.spiders.moodle_spider import scrape_attendance
@@ -11,10 +11,7 @@ from mis_functions import bunk_lecture, until80
 from scraper.database import init_db, db_session
 from scraper.models import Chat
 
-# Read settings from config file
-config = ConfigParser()
-config.read('files/creds.ini')
-TOKEN = config.get('BOT', 'TOKEN')
+TOKEN = environ['TOKEN']
 updater = Updater(TOKEN)
 
 # Enable logging

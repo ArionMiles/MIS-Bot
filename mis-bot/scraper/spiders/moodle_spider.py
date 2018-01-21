@@ -1,19 +1,13 @@
 #!/usr/local/bin/python3
-import os
+from os import environ
 import base64
-from configparser import ConfigParser
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
 import scrapy.crawler as crawler
 from twisted.internet import reactor
 from multiprocessing import Process, Queue
-from ..items import LecturesItem
 from scrapy_splash import SplashRequest
-
-# Read settings from config file
-config = ConfigParser()
-config.read('files/creds.ini')
-SPLASH_INSTANCE = config.get('BOT', 'SPLASH_INSTANCE')
+from ..items import LecturesItem
 
 xpaths = {
     'total_lec_conducted': '//table[1]/tbody/tr[last()]/td[2]/b/text()',
@@ -86,7 +80,7 @@ def scrape_attendance(USERNAME, PASSWORD, chatID):
                                            'scrapy_splash.SplashMiddleware': 725,
                                            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
 
-                'SPLASH_URL':SPLASH_INSTANCE,
+                'SPLASH_URL':environ['SPLASH_INSTANCE'],
                 'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
                 'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
             })

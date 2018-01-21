@@ -1,16 +1,11 @@
+from os import environ
 import base64
-from configparser import ConfigParser
 from multiprocessing import Process, Queue
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
 from scrapy_splash import SplashRequest
 import scrapy.crawler as crawler
 from twisted.internet import reactor
-
-# Read settings from config file
-config = ConfigParser()
-config.read('files/creds.ini')
-SPLASH_INSTANCE = config.get('BOT', 'SPLASH_INSTANCE')
 
 class ResultsSpider(InitSpider):
     name = 'results'
@@ -68,7 +63,7 @@ def scrape_results(USERNAME, PASSWORD):
                                    'scrapy_splash.SplashMiddleware': 725,
                                    'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
 
-        'SPLASH_URL':SPLASH_INSTANCE,
+        'SPLASH_URL':environ['SPLASH_INSTANCE'],
         'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
         'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
         })

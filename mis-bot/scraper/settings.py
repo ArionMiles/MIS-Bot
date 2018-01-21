@@ -23,7 +23,7 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
 }
 
-SPLASH_URL = 'http://139.59.93.143:8050'
+SPLASH_URL = '__YOUR-SPLASH-SERVER-IP-HERE__'
 
 SPIDER_MIDDLEWARES = {
     'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,

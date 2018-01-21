@@ -46,11 +46,11 @@ class AttendanceSpider(InitSpider):
         """Check the response returned by a login request to see if we are
         successfully logged in."""
         if self.USERNAME in response.body.decode():
-            self.log("Login Successful!")
+            self.logger.info("Login Successful!")
             # Now the crawling can begin..
             return self.initialized()
         else:
-            self.log("Login failed! Check site status and credentials.")
+            self.logger.info("Login failed! Check site status and credentials.")
             # Something went wrong, we couldn't log in, so nothing happens.
 
     def parse(self, response):
@@ -59,7 +59,7 @@ class AttendanceSpider(InitSpider):
             'html': 1,
             'png': 1
         }
-        self.log("Taking snapshot of Attendance Report...")
+        self.logger.info("Taking snapshot of Attendance Report...")
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
     def parse_result(self, response):
@@ -68,7 +68,7 @@ class AttendanceSpider(InitSpider):
         filename = '{}_attendance.png'.format(self.USERNAME)
         with open(filename, 'wb') as f:
             f.write(imgdata)
-            self.log("Saved attendance report as: {}_attendance.png".format(self.USERNAME))
+            self.logger.info("Saved attendance report as: {}_attendance.png".format(self.USERNAME))
 
         yield LecturesItem(
             total_lec_conducted = response.xpath(xpaths['total_lec_conducted']).extract()[0].strip(),

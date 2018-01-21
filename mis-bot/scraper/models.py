@@ -16,8 +16,7 @@ class Attendance(Base):
         self.chatID = chatID
 
     def __repr__(self):
-        return '<Attendance Data: total_lec_attended: {} \
-        total_lec_conducted: {} chatID: {}>'.format(self.total_lec_attended, \
+        return '<attended: {} || conducted: {} || chatID: {}>'.format(self.total_lec_attended, \
             self.total_lec_conducted, self.chatID)
 
 class Chat(Base):
@@ -33,4 +32,4 @@ class Chat(Base):
         self.chatID = chatID
 
     def __repr__(self):
-        return '<Chat {} chatID: {}>'.format(self.PID, self.chatID)
+        return '<PID: {} || chatID: {}>'.format(self.PID, self.chatID)

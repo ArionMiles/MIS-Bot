@@ -123,3 +123,5 @@ scrapyd-client/
 setup\.py
 
 mis-bot/models\.bak\.py
+
+*.png

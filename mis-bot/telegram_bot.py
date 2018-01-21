@@ -153,10 +153,10 @@ def delete(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
         return
     userChat = Chat.query.filter(Chat.chatID == chatID)
+    logger.info("Deleting user credentials for %s!" % (userChat.PID))
     userChat.delete()
     db_session.commit()
     bot.sendMessage(chat_id=update.message.chat_id, text="Your credentials have been deleted!")
-    logger.info("User credentials for %s deleted!" % (userChat.PID))
 
 def cancel(bot, update):
     """Cancel registration operation."""

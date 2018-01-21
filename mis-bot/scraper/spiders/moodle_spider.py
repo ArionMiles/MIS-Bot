@@ -12,7 +12,7 @@ from scrapy_splash import SplashRequest
 
 # Read settings from config file
 config = ConfigParser()
-config.read('creds.ini')
+config.read('files/creds.ini')
 SPLASH_INSTANCE = config.get('BOT', 'SPLASH_INSTANCE')
 
 xpaths = {
@@ -65,7 +65,7 @@ class AttendanceSpider(InitSpider):
     def parse_result(self, response):
         '''Store the screenshot'''
         imgdata = base64.b64decode(response.data['png'])
-        filename = '{}_attendance.png'.format(self.USERNAME)
+        filename = 'files/{}_attendance.png'.format(self.USERNAME)
         with open(filename, 'wb') as f:
             f.write(imgdata)
             self.logger.info("Saved attendance report as: {}_attendance.png".format(self.USERNAME))

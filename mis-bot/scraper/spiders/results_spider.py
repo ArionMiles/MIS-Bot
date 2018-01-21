@@ -9,7 +9,7 @@ from twisted.internet import reactor
 
 # Read settings from config file
 config = ConfigParser()
-config.read('creds.ini')
+config.read('files/creds.ini')
 SPLASH_INSTANCE = config.get('BOT', 'SPLASH_INSTANCE')
 
 class ResultsSpider(InitSpider):
@@ -55,7 +55,7 @@ class ResultsSpider(InitSpider):
     def parse_result(self, response):
         '''Store the screenshot'''
         imgdata = base64.b64decode(response.data['png'])
-        filename = '{}_tests.png'.format(self.USERNAME)
+        filename = 'files/{}_tests.png'.format(self.USERNAME)
         with open(filename, 'wb') as f:
             f.write(imgdata)
 

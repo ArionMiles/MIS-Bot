@@ -13,7 +13,7 @@ from scraper.models import Chat
 
 # Read settings from config file
 config = ConfigParser()
-config.read('creds.ini')
+config.read('files/creds.ini')
 TOKEN = config.get('BOT', 'TOKEN')
 updater = Updater(TOKEN)
 
@@ -66,7 +66,7 @@ def attendance(bot, job):
     scrape_attendance(Student_ID, password, chatID)
 
     try:
-        bot.send_photo(chat_id=update.message.chat_id, photo=open("{}_attendance.png".format(Student_ID),'rb'),
+        bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_attendance.png".format(Student_ID),'rb'),
                    caption='Attendance Report for {}'.format(Student_ID))
     except IOError:
         bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
@@ -92,7 +92,7 @@ def results(bot, job):
     scrape_results(Student_ID, password)
 
     try:
-    	bot.send_photo(chat_id=update.message.chat_id, photo=open("{}_tests.png".format(Student_ID),'rb'),
+    	bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_tests.png".format(Student_ID),'rb'),
                    caption='Test Report for {}'.format(Student_ID))
     except IOError:
     	bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')

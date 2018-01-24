@@ -133,7 +133,7 @@ def credentials(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
         return ConversationHandler.END
 
-    logger.info("New Registration! Username: %s , " % (Student_ID))
+    logger.info("New Registration! Username: %s" % (Student_ID))
     
     # Create an object of Class <Chat> and store Student_ID, password, and Telegeram
     # User ID, Add it to the database, commit it to the database. 
@@ -152,11 +152,13 @@ def delete(bot, update):
     if not Chat.query.filter(Chat.chatID == chatID).first():
         bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
         return
-    userChat = Chat.query.filter(Chat.chatID == chatID)
-    logger.info("Deleting user credentials for %s!" % (userChat.PID))
-    userChat.delete()
-    db_session.commit()
-    bot.sendMessage(chat_id=update.message.chat_id, text="Your credentials have been deleted!")
+    user_details = db_session.query(Chat).filter(Chat.chatID == chatID).first() #Pull user's username from the DB
+    username = user_details.PID
+    logger.info("Deleting user credentials for %s!" % (username))
+    Chat.query.filter(Chat.chatID == chatID).delete() #Delete the user's record referenced by their ChatID
+    db_session.commit() #Save changes
+    bot.sendMessage(chat_id=update.message.chat_id, text="Your credentials have been deleted, %s\nHope to see you back soon." \
+        % (username[3:-4].title()))
 
 def cancel(bot, update):
     """Cancel registration operation."""

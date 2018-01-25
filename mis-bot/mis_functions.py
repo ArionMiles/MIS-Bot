@@ -8,6 +8,8 @@ from sympy import Symbol, Eq, solveset
 from scraper.database import init_db, db_session
 from scraper.models import Attendance
 
+import requests
+
 def bunk_lecture(n, tot_lec, chatID):
     init_db()
     record = db_session.query(Attendance).filter(Attendance.chatID == chatID).first()
@@ -25,3 +27,18 @@ def until80(chatID):
     expr = Eq((((int(attended) + x)/(int(conducted) + x))*100), 80)
     soln = solveset(expr, x)
     return next(iter(soln)) # Extracting the integer from singleton set soln.
+
+def check_login(username, password):
+    base_url = 'http://report.aldel.org/student_page.php'
+    payload = {
+        'studentid':username,
+        'studentpwd':password,
+        'student_submit':''
+        }
+    with requests.session() as s:
+        s.post(base_url, data=payload)
+        r = s.get('http://report.aldel.org/student/attendance_report.php')
+        if username in r.text:
+            return True
+        else:
+            return False

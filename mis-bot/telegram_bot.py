@@ -7,7 +7,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Conve
 from scraper.spiders.moodle_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 
-from mis_functions import bunk_lecture, until80
+from mis_functions import bunk_lecture, until80, check_login
 from scraper.database import init_db, db_session
 from scraper.models import Chat
 
@@ -25,23 +25,29 @@ CREDENTIALS= 0
 
 def start(bot, update):
     """Initial message sent to all users."""
-    intro_message = "Hi! I'm a Telegram Bot for MIS.\
-    \nMy source code lives at [Github.](https://github.com/ArionMiles/MIS-Bot) 👨‍💻" \
-    "\nTo start using my services, please send me your MIS credentials in this format: \
-    \n\n`Student-ID password` \
-    \n(in a single line, separated by a space)\
-    \n\nUse /cancel to abort.\
-    \nUse /help to learn more."
+    intro_message = textwrap.dedent("""
+    Hi! I'm a Telegram Bot for Aldel MIS.
+    My source code lives at [Github.](https://github.com/ArionMiles/MIS-Bot) 👨‍💻
+    To start using my services, please send me your MIS credentials in this format: 
+    `Student-ID password` 
+    (in a single line, separated by a space)
+
+    Use /cancel to abort.
+    Use /help to learn more.
+    """)
     bot.sendMessage(chat_id=update.message.chat_id, text=intro_message, parse_mode='markdown',\
         disable_web_page_preview=True)
     return CREDENTIALS
 
 def register(bot, update):
     """Let all users register with their credentials."""
-    messageContent = "Okay, send me your MIS credentials in this format: \
-    \n`Student-ID password` \
-    \n(in a single line, separated by a space)\
-    \n\nUse /cancel to abort."
+    messageContent = textwrap.dedent("""
+    Okay, send me your MIS credentials in this format:
+    `Student-ID password`
+    (in a single line, separated by a space)
+
+    Use /cancel to abort.
+    """)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
     return CREDENTIALS
 
@@ -89,10 +95,11 @@ def results(bot, job):
     scrape_results(Student_ID, password)
 
     try:
-    	bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_tests.png".format(Student_ID),'rb'),
+        bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_tests.png".format(Student_ID),'rb'),
                    caption='Test Report for {}'.format(Student_ID))
     except IOError:
-    	bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
+        bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
+        logger.warning("Something went wrong! Check if the Splash server is up.")
 
 def fetch_results(bot, update, job_queue):
     updater.job_queue.run_once(results, 0, context=update)
@@ -105,8 +112,13 @@ def bunk_lec(bot, update, args):
         messageContent = 'Projected attendance = ' + str(r) + '%'
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     else:
-        bot.sendMessage(chat_id=update.message.chat_id, text='This command expects 2 arguments.\
-            \nUse /help to learn how to use this command.')
+        messageContent = textwrap.dedent("""
+            This command expects 2 arguments.
+            
+            e.g: If you wish to bunk 1 out of 5 total lectures conducted today, send
+            `/bunk 1 5`
+            """)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
 
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%"""
@@ -125,13 +137,28 @@ def credentials(bot, update):
     try:
         Student_ID, passwd = update.message.text.split()
     except ValueError:
+        messageContent = textwrap.dedent("""
+        Oops, you made a mistake! 
+        You must send the Student_ID and password in a single line, separated by a space.
+        This is what valid login credentials look like:
+        `123name4567 password`
+        """)
         bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
-        update.message.reply_text("Oops, you made a mistake! You must send the Student_ID and password in a single line, separated by a space.")
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
         return
 
     if Chat.query.filter(Chat.chatID == chatID).first():
         bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
         return ConversationHandler.END
+
+    if check_login(Student_ID, passwd) == False:
+        messageContent = textwrap.dedent("""
+        Looks like your credentials are incorrect! Give it one more shot.
+        This is what valid login credentials look like:
+        `123name4567 password`
+        """)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
+        return
 
     logger.info("New Registration! Username: %s" % (Student_ID))
     
@@ -174,16 +201,20 @@ def unknown(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 def help(bot, update):
-    helpText = "1. /register - Register yourself\
-                \n2. /attendance - Fetch attendance from the MIS website.\
-                \n3. /results - Fetch unit test results\
-                \n4. /bunk - Calculate % drop/rise.\
-                \n`usage: /bunk x y`\
-                \nwhere `x = No. of lectures to bunk` \n`y = no. of lectures conducted on that day`\
-                \n5. /until80 - No. of lectures to attend consecutively until attendance is 80%\
-                \n6. /cancel - Cancel registration.\
-                \n7. /delete - Delete your credentials.\
-                \n8. /tips - Random tips."
+    helpText = textwrap.dedent("""
+    1. /register - Register yourself
+    2. /attendance - Fetch attendance from the MIS website.
+    3. /results - Fetch unit test results
+    4. /bunk - Calculate % \drop/rise.
+    `usage: /bunk x y`
+    where `x = No. of lectures to bunk`
+    `y = no. of lectures conducted on that day`
+
+    5. /until80 - No. of lectures to attend consecutively until attendance is 80%
+    6. /cancel - Cancel registration.
+    7. /delete - Delete your credentials.
+    8. /tips - Random tips.
+    """)
     bot.sendMessage(chat_id=update.message.chat_id, text=helpText, parse_mode='markdown')
 
 def tips(bot, update):

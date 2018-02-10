@@ -51,7 +51,9 @@ class AttendanceSpider(InitSpider):
         url = 'http://report.aldel.org/student/attendance_report.php'
         splash_args = {
             'html': 1,
-            'png': 1
+            'png': 1,
+            'wait':0.1,
+            'render_all':1
         }
         self.logger.info("Taking snapshot of Attendance Report...")
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)

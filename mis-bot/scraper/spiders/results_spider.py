@@ -56,7 +56,7 @@ class ResultsSpider(InitSpider):
         filename = 'files/{}_tests.png'.format(self.USERNAME)
         with open(filename, 'wb') as f:
             f.write(imgdata)
-            self.logger.info("Saved attendance report as: {}_tests.png".format(self.USERNAME))
+            self.logger.info("Saved test report as: {}_tests.png".format(self.USERNAME))
 
 def scrape_results(USERNAME, PASSWORD):
     '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''

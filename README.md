@@ -59,14 +59,23 @@ If you wish to run your own instance of the bot, follow the below steps. Note th
      ```
      TOKEN="your_bot_token"
      SPLASH_INSTANCE="your_splash_instance_ip_addr:8050"
+     URL="server_ip_addr"
      ```
      Save your changes with `Ctrl-O`, and exit with `Ctrl-X`
 
      You can get the bot token from BotFather on telegram.
      Put the IP Address and port (8050 by default) of the Splash server into the creds file.
- 5. You must run a splash server (on a linux machine preferrably) to be able see the attendance and test reports, since it requires splash to generate the screenshot.
- 6. To test run the bot, cd to the project dir and run `python telegram_bot.py`
- 7. If everything works fine, you should create a systemd service (for a linux machine) so that it'll run on startup. To get an idea of how to set up a systemd service, [read this article](https://www.raspberrypi-spy.co.uk/2015/10/how-to-autorun-a-python-script-on-boot-using-systemd/) (it's same for all debian based distros)
+ 5. Generate SSL certificates. Telegram servers communicate only via HTTPS, with long polling, the telegram servers take care of it, but since we're using webhooks, we need to take care of it. We'll be using a self-signed certificate.
+     To create a self-signed SSL certificate using openssl, run the following command:
+
+    `openssl req -newkey rsa:2048 -sha256 -nodes -keyout private.key -x509 -days 3650 -out cert.pem`
+
+    The openssl utility will ask you a few details. **Make sure you enter the correct FQDN!** If your server has a domain, enter the full domain name here (eg. sub.example.com). If your server only has an IP address, enter that instead. If you enter an invalid FQDN (Fully Qualified Domain Name), you won't receive any updates from Telegram but also won't see any errors!
+
+    [Source](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#creating-a-self-signed-certificate-using-openssl)
+ 6. You must run a splash server (on a linux machine preferrably) to be able see the attendance and test reports, since it requires splash to generate the screenshot.
+ 7. To test run the bot, cd to the project dir and run `python telegram_bot.py`
+ 8. If everything works fine, you should create a systemd service (for a linux machine) so that it'll run on startup. To get an idea of how to set up a systemd service, [read this article](https://www.raspberrypi-spy.co.uk/2015/10/how-to-autorun-a-python-script-on-boot-using-systemd/) (it's same for all debian based distros)
     This is my project's systemd service:
 
     ```

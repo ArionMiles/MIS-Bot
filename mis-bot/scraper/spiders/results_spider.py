@@ -32,19 +32,22 @@ class ResultsSpider(InitSpider):
         """Check the response returned by a login request to see if we are
         successfully logged in."""
         if self.USERNAME in response.body.decode():
-            self.log("Login Successful!")
+            self.logger.info("Login Successful!")
             # Now the crawling can begin..
             return self.initialized()
         else:
-            self.log("Login failed! Check site status and credentials.")
+            self.logger.warning("Login failed! Check site status and credentials.")
             # Something went wrong, we couldn't log in, so nothing happens.
     def parse(self, response):
         '''Start SplashRequest'''
         url = 'http://report.aldel.org/student/test_marks_report.php'
         splash_args = {
             'html': 1,
-            'png': 1
+            'png': 1,
+            'wait':0.1,
+            'render_all':1
         }
+        self.logger.info("Taking snapshot of Test Report for %s..." %(self.USERNAME))
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
     def parse_result(self, response):
@@ -53,6 +56,7 @@ class ResultsSpider(InitSpider):
         filename = 'files/{}_tests.png'.format(self.USERNAME)
         with open(filename, 'wb') as f:
             f.write(imgdata)
+            self.logger.info("Saved attendance report as: {}_tests.png".format(self.USERNAME))
 
 def scrape_results(USERNAME, PASSWORD):
     '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''

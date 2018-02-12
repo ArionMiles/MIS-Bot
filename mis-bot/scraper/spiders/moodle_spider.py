@@ -44,7 +44,7 @@ class AttendanceSpider(InitSpider):
             # Now the crawling can begin..
             return self.initialized()
         else:
-            self.logger.info("Login failed! Check site status and credentials.")
+            self.logger.warning("Login failed! Check site status and credentials.")
             # Something went wrong, we couldn't log in, so nothing happens.
 
     def parse(self, response):
@@ -55,7 +55,7 @@ class AttendanceSpider(InitSpider):
             'wait':0.1,
             'render_all':1
         }
-        self.logger.info("Taking snapshot of Attendance Report...")
+        self.logger.info("Taking snapshot of Attendance Report for {}...".format(self.USERNAME))
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
     def parse_result(self, response):

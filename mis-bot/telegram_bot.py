@@ -264,8 +264,15 @@ def main():
     dispatcher.add_handler(tips_handler)
     dispatcher.add_handler(unknown_message)
 
-    #Long polling
-    updater.start_polling(clean=True)
+    webhook_url = 'https://%s:8443/%s'%(environ['URL'],TOKEN)
+
+    updater.start_webhook(listen='0.0.0.0',
+                      port=8443,
+                      url_path=TOKEN,
+                      key='files/private.key',
+                      cert='files/cert.pem',
+                      webhook_url=webhook_url,
+                      clean=True)
     updater.idle()
 
 if __name__ == '__main__':

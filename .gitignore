@@ -125,3 +125,7 @@ setup\.py
 mis-bot/models\.bak\.py
 
 *.png
+
+mis-bot/table_scraper\.py
+
+mis-bot/scraper/captcha\.py

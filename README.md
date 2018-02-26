@@ -6,9 +6,6 @@
 # Introduction
 I created this bot as a means to avoid Defaulter's List, and I hope this bot can help others avoid it, too. The bot is hosted on Digital Ocean. 
 
-## Flowchart
-TO BE ADDED
-
 ## Features
   * **Bunk Calculator**
   
@@ -42,6 +39,10 @@ TO BE ADDED
   * **Results**
 
     Fetch results of Class Tests. Uses scrapy-splash library.
+
+  * **CAPTCHA Bypass**
+  
+    The bot can automatically answer the captcha code for logging in.
 
 ## Setup
 If you wish to run your own instance of the bot, follow the below steps. Note that it is recommended you use Linux to host this project as it's not completely compatible with Windows. I'm constantly working on making it platform agnostic so that it can be used on any OS.

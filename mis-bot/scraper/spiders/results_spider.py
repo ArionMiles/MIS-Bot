@@ -7,6 +7,8 @@ from scrapy_splash import SplashRequest
 import scrapy.crawler as crawler
 from twisted.internet import reactor
 
+from ..captcha import captcha_solver
+
 class ResultsSpider(InitSpider):
     name = 'results'
     allowed_domains = ['report.aldel.org']
@@ -24,8 +26,11 @@ class ResultsSpider(InitSpider):
 
     def login(self, response):
         """Generate a login request."""
+        sessionID = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
+        captcha_answer = captcha_solver(sessionID)
+        self.logger.info("Captcha Answer: %s" % (captcha_answer))
         return FormRequest.from_response(response,
-                    formdata={'studentid': self.USERNAME, 'studentpwd': self.PASSWORD},
+                    formdata={'studentid': self.USERNAME, 'studentpwd': self.PASSWORD, 'captcha_code':captcha_answer},
                     callback=self.check_login_response)
 
     def check_login_response(self, response):

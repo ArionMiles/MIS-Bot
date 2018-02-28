@@ -5,6 +5,7 @@ import requests
 
 from scraper.database import init_db, db_session
 from scraper.models import Attendance
+from scraper.captcha import captcha_solver
 
 def bunk_lecture(n, tot_lec, chatID):
     '''Bunk calculator'''
@@ -29,15 +30,17 @@ def until80(chatID):
 def check_login(username, password):
     '''Checks if user input for their credentials is correct.'''
     base_url = 'http://report.aldel.org/student_page.php'
-    payload = {
+    with requests.session() as s:
+        r = s.get(base_url)
+        sessionID = str(r.cookies.get('PHPSESSID')) #Get SessionID
+        captcha_answer = captcha_solver(sessionID) #Solve the CAPTCHA
+        payload = {
         'studentid':username,
         'studentpwd':password,
+        'captcha_code':captcha_answer,
         'student_submit':''
         }
-    with requests.session() as s:
         s.post(base_url, data=payload)
         r = s.get('http://report.aldel.org/student/attendance_report.php')
-        if username in r.text:
-            return True
-        else:
-            return False
+        return username in r.text
+

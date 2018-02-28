@@ -34,6 +34,7 @@ def start(bot, update):
 
     Use /cancel to abort.
     Use /help to learn more.
+    Join the [Channel](https://t.me/joinchat/AAAAAEzdjHzLCzMiKpUw6w) to get updates about the bot's status.
     """)
     bot.sendMessage(chat_id=update.message.chat_id, text=intro_message, parse_mode='markdown',\
         disable_web_page_preview=True)

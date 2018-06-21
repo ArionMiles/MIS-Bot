@@ -231,7 +231,7 @@ def bunk_choose(bot, update, user_data):
     user_data['type'] = update.message.text
     stype = user_data['type']
     reply_markup = ReplyKeyboardRemove()
-    bot.sendMessage(chat_id=update.message.chat_id, text=f"{stype}", reply_markup=reply_markup)
+    bot.sendMessage(chat_id=update.message.chat_id, text="{}".format(stype), reply_markup=reply_markup)
 
     if(stype == "Lectures"):
         subject_data = Lecture.query.filter(Lecture.chatID == update.message.chat_id).all()
@@ -243,7 +243,7 @@ def bunk_choose(bot, update, user_data):
 
     for subject in subject_data:
         subject_name = subject.name
-        messageContent += f"/{digit}. {subject_name}\n"
+        messageContent += "/{digit}. {subject_name}\n".format(digit=digit, subject_name=subject_name)
         digit +=1
 
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
@@ -278,14 +278,14 @@ def bunk_calc(bot, update, user_data):
         loss = round((current - predicted), 2)
         gain = round((no_bunk - current), 2)
 
-        messageContent = textwrap.dedent(f"""
+        messageContent = textwrap.dedent("""
             Current: {current}
             Predicted: {predicted}
             If you attend: {no_bunk}
 
             Loss: {loss}
             Gain: {gain}
-            """)
+            """).format(current=current, predicted=predicted, no_bunk=no_bunk, loss=loss, gain=gain)
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     else:
         messageContent = textwrap.dedent("""

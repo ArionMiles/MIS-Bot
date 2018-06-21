@@ -74,7 +74,6 @@ class AttendanceSpider(InitSpider):
             lec_item['subject'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[1]//text()').extract()])
             lec_item['conducted'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[2]//text()').extract()])
             lec_item['attended'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[3]//text()').extract()])
-            #my_item['percent'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[4]//text()').extract()])
             yield lec_item
 
         practicalsItems = response.xpath('//table[2]/tbody/tr')
@@ -84,7 +83,6 @@ class AttendanceSpider(InitSpider):
             prac_item['subject'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[1]//text()').extract()])
             prac_item['conducted'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[2]//text()').extract()])
             prac_item['attended'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[3]//text()').extract()])
-            #my_item['percent'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[4]//text()').extract()])
             yield prac_item
 
 def scrape_attendance(USERNAME, PASSWORD, chatID):

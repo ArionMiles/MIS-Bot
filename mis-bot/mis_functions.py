@@ -2,26 +2,31 @@ from __future__ import division
 from sympy.solvers import solve
 from sympy import Symbol, Eq, solveset
 import requests
-
+from sqlalchemy import and_
 from scraper.database import init_db, db_session
-from scraper.models import Attendance
+from scraper.models import Lecture, Practical
 from scraper.captcha import captcha_solver
 
-def bunk_lecture(n, tot_lec, chatID):
+def bunk_lecture(n, tot_lec, chatID, stype, index):
     '''Bunk calculator'''
     init_db()
-    record = db_session.query(Attendance).filter(Attendance.chatID == chatID).first()
-    attended = record.total_lec_attended
-    conducted = record.total_lec_conducted
+    if(stype == "Lectures"):
+        subject_data = Lecture.query.filter(Lecture.chatID == chatID).all()
+    else:
+        subject_data = Practical.query.filter(Practical.chatID == chatID).all()
+    index -= 1 # DB Tables are Zero-Index 
+    attended = subject_data[index].attended
+    conducted = subject_data[index].conducted
+
     result = (((int(attended) + int(tot_lec)) -  int(n))/(int(conducted) + tot_lec)) * 100
     return round(result, 2) #Round up to 2 decimals.
 
 def until80(chatID):
     '''Calculates the no. of lectures user must attend in order to get attendance to 80%'''
     init_db()
-    record = db_session.query(Attendance).filter(Attendance.chatID == chatID).first()
-    attended = record.total_lec_attended
-    conducted = record.total_lec_conducted
+    subject_data = Lecture.query.filter(and_(Lecture.chatID == chatID, Lecture.name == "Total")).first()
+    attended = subject_data.attended
+    conducted = subject_data.conducted
     x = Symbol('x')
     expr = Eq((((int(attended) + x)/(int(conducted) + x))*100), 80)
     soln = solveset(expr, x)

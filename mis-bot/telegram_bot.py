@@ -1,17 +1,18 @@
-﻿# -*- coding: utf-8 -*-
-from os import environ
+# -*- coding: utf-8 -*-
+import os
 import logging
 import textwrap
 import random
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from scraper.spiders.moodle_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 
 from mis_functions import bunk_lecture, until80, check_login
 from scraper.database import init_db, db_session
-from scraper.models import Chat
+from scraper.models import Chat, Lecture, Practical
 
-TOKEN = environ['TOKEN']
+TOKEN = os.environ['TOKEN']
 updater = Updater(TOKEN)
 
 # Enable logging
@@ -21,7 +22,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 #Define state
-CREDENTIALS= 0
+CREDENTIALS = 0
+CHOOSING, INPUT, CALCULATING = range(3)
 
 def start(bot, update):
     """Initial message sent to all users."""
@@ -72,6 +74,7 @@ def attendance(bot, job):
     try:
         bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_attendance.png".format(Student_ID),'rb'),
                    caption='Attendance Report for {}'.format(Student_ID))
+        os.remove('files/{}_attendance.png'.format(Student_ID)) #Delete saved image
     except IOError:
         bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
         logger.warning("Something went wrong! Check if the Splash server is up.")
@@ -98,28 +101,13 @@ def results(bot, job):
     try:
         bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_tests.png".format(Student_ID),'rb'),
                    caption='Test Report for {}'.format(Student_ID))
+        os.remove('files/{}_tests.png'.format(Student_ID)) #Delete saved image
     except IOError:
         bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
         logger.warning("Something went wrong! Check if the Splash server is up.")
 
 def fetch_results(bot, update, job_queue):
     updater.job_queue.run_once(results, 0, context=update)
-
-def bunk_lec(bot, update, args):
-    """Calculate drop/rise in attendance if you bunk some lectures."""
-    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
-    if len(args) == 2:
-        r = bunk_lecture(int(args[0]), int(args[1]), update.message.chat_id)
-        messageContent = 'Projected attendance = ' + str(r) + '%'
-        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
-    else:
-        messageContent = textwrap.dedent("""
-            This command expects 2 arguments.
-            
-            e.g: If you wish to bunk 1 out of 5 total lectures conducted today, send
-            `/bunk 1 5`
-            """)
-        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
 
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%"""
@@ -228,6 +216,88 @@ def tips(bot, update):
     messageContent = random.choice(tips)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
 
+def bunk(bot, update):
+    """WIP"""
+    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
+    keyboard = [['Lectures'], ['Practicals']]
+    reply_markup = ReplyKeyboardMarkup(keyboard)
+    messageContent = "Select type!"
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
+
+    return CHOOSING
+
+def bunk_choose(bot, update, user_data):
+    '''WIP'''
+    user_data['type'] = update.message.text
+    stype = user_data['type']
+    reply_markup = ReplyKeyboardRemove()
+    bot.sendMessage(chat_id=update.message.chat_id, text=f"{stype}", reply_markup=reply_markup)
+
+    if(stype == "Lectures"):
+        subject_data = Lecture.query.filter(Lecture.chatID == update.message.chat_id).all()
+    else:
+        subject_data = Practical.query.filter(Practical.chatID == update.message.chat_id).all()
+
+    digit = 1
+    messageContent = ""
+
+    for subject in subject_data:
+        subject_name = subject.name
+        messageContent += f"/{digit}. {subject_name}\n"
+        digit +=1
+
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    digit = 0
+    return INPUT
+
+def bunk_input(bot, update, user_data):
+    user_data['index'] = update.message.text
+    index = int(update.message.text.strip('/'))
+    messageContent = textwrap.dedent("""
+        Send number of lectures you wish to bunk and total lectures conducted for that subject,
+        separated by a space.
+        """)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    return CALCULATING
+
+def bunk_calc(bot, update, user_data):
+    user_data['figures'] = update.message.text
+    stype = user_data['type']
+    try:
+        index = int(user_data['index'].split('/')[1])
+    except ValueError:
+        return ConversationHandler.END
+    args = user_data['figures'].split(' ')
+
+    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
+
+    if len(args) == 2:
+        current = bunk_lecture(0, 0, update.message.chat_id, stype, index)
+        predicted = bunk_lecture(int(args[0]), int(args[1]), update.message.chat_id, stype, index)
+        no_bunk = bunk_lecture(0, int(args[1]), update.message.chat_id, stype, index)
+        loss = round((current - predicted), 2)
+        gain = round((no_bunk - current), 2)
+
+        messageContent = textwrap.dedent(f"""
+            Current: {current}
+            Predicted: {predicted}
+            If you attend: {no_bunk}
+
+            Loss: {loss}
+            Gain: {gain}
+            """)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    else:
+        messageContent = textwrap.dedent("""
+            This command expects 2 arguments.
+            
+            e.g: If you wish to bunk 1 out of 5 total lectures conducted today, send
+            `1 5`
+            """)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
+        return
+    return ConversationHandler.END
+
 def main():
     """Start the bot and use long polling to detect and respond to new messages."""
     # Init Database
@@ -243,11 +313,23 @@ def main():
 
             fallbacks=[CommandHandler('cancel', cancel)]
         )
+
+    bunk_handler = ConversationHandler(
+            entry_points=[CommandHandler('bunk', bunk)],
+
+            states={
+                CHOOSING: [MessageHandler(Filters.text | Filters.command, bunk_choose, pass_user_data=True)],
+                INPUT: [MessageHandler(Filters.command | Filters.command, bunk_input, pass_user_data=True)],
+                CALCULATING: [MessageHandler(Filters.text | Filters.command, bunk_calc, pass_user_data=True)]
+            },
+
+            fallbacks=[CommandHandler('cancel', cancel)]
+        )
+
     # Handlers
     start_handler = CommandHandler('start', start)
     attendance_handler = CommandHandler('attendance', fetch_attendance, pass_job_queue=True)
     results_handler = CommandHandler('results', fetch_results, pass_job_queue=True)
-    bunk_handler = CommandHandler('bunk', bunk_lec, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help)
@@ -265,7 +347,7 @@ def main():
     dispatcher.add_handler(tips_handler)
     dispatcher.add_handler(unknown_message)
 
-    webhook_url = 'https://%s:8443/%s'%(environ['URL'],TOKEN)
+    webhook_url = 'https://%s:8443/%s'%(os.environ['URL'],TOKEN)
 
     updater.start_webhook(listen='0.0.0.0',
                       port=8443,

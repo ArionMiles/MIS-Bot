@@ -33,7 +33,8 @@ SPIDER_MIDDLEWARES = {
 DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
 
 ITEM_PIPELINES = {
-    'scraper.pipelines.AttendancePipeline': 300,
+    'scraper.pipelines.LecturePipeline': 300,
+    'scraper.pipelines.PracticalPipeline': 400,
 }
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

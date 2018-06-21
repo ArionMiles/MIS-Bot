@@ -8,13 +8,8 @@ from twisted.internet import reactor
 from multiprocessing import Process, Queue
 from scrapy_splash import SplashRequest
 
-from ..items import LecturesItem
+from ..items import Lectures, Practicals
 from ..captcha import captcha_solver
-
-xpaths = {
-    'total_lec_conducted': '//table[1]/tbody/tr[last()]/td[2]/b/text()',
-    'total_lec_attended': '//table[1]/tbody/tr[last()]/td[3]/b/text()',
-}
 
 class AttendanceSpider(InitSpider):
     name = 'attendance'
@@ -70,18 +65,35 @@ class AttendanceSpider(InitSpider):
         with open(filename, 'wb') as f:
             f.write(imgdata)
             self.logger.info("Saved attendance report as: {}_attendance.png".format(self.USERNAME))
+        
+        """CODE FOR SCRAPING EVERY ELEMENT FROM THE TABLE"""
+        lecturesItems = response.xpath('//table[1]/tbody/tr')
+        for item in lecturesItems[2:]: # starting from 2nd element since 1st row is Student Name
+            lec_item = Lectures()
+            
+            lec_item['subject'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[1]//text()').extract()])
+            lec_item['conducted'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[2]//text()').extract()])
+            lec_item['attended'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[3]//text()').extract()])
+            #my_item['percent'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[4]//text()').extract()])
+            yield lec_item
 
-        yield LecturesItem(
-            total_lec_conducted = response.xpath(xpaths['total_lec_conducted']).extract()[0].strip(),
-            total_lec_attended = response.xpath(xpaths['total_lec_attended']).extract()[0].strip(),
-            )
+        practicalsItems = response.xpath('//table[2]/tbody/tr')
+        for item in practicalsItems[1:]:
+            prac_item = Practicals()
+
+            prac_item['subject'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[1]//text()').extract()])
+            prac_item['conducted'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[2]//text()').extract()])
+            prac_item['attended'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[3]//text()').extract()])
+            #my_item['percent'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[4]//text()').extract()])
+            yield prac_item
 
 def scrape_attendance(USERNAME, PASSWORD, chatID):
     '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''
     def f(q):
         try:
             runner = crawler.CrawlerRunner({
-                'ITEM_PIPELINES': {'scraper.pipelines.AttendancePipeline': 300,},
+                'ITEM_PIPELINES': {'scraper.pipelines.LecturePipeline': 300,
+                                    'scraper.pipelines.PracticalPipeline': 400,},
 
                 'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
                                            'scrapy_splash.SplashMiddleware': 725,

@@ -7,7 +7,12 @@
 
 from scrapy import Item, Field
 
+class Lectures(Item):
+    subject = Field()
+    conducted = Field()
+    attended = Field()
 
-class LecturesItem(Item):
-    total_lec_conducted=Field()
-    total_lec_attended=Field()
+class Practicals(Item):
+    subject = Field()
+    conducted = Field()
+    attended = Field()

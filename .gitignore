@@ -129,3 +129,13 @@ mis-bot/models\.bak\.py
 mis-bot/table_scraper\.py
 
 mis-bot/scraper/captcha\.py
+
+*.sublime-workspace
+
+*.sublime-project
+
+mis-bot/Untitled\.ipynb
+
+mis-bot/testCaptcha\.py
+
+mis-bot/scraper/\.ipynb_checkpoints/

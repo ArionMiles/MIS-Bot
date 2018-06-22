@@ -238,6 +238,15 @@ def bunk_choose(bot, update, user_data):
     else:
         subject_data = Practical.query.filter(Practical.chatID == update.message.chat_id).all()
 
+
+    if not subject_data: #If list is empty
+        messageContent = textwrap.dedent("""
+            No records found!
+            Please use /attendance to pull your attendance from the website first.
+            """)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+        return ConversationHandler.END
+
     digit = 1
     messageContent = ""
 

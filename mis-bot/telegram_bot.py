@@ -44,6 +44,9 @@ def start(bot, update):
 
 def register(bot, update):
     """Let all users register with their credentials."""
+    if Chat.query.filter(Chat.chatID == update.message.chat_id).first():
+        bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
+        return ConversationHandler.END
     messageContent = textwrap.dedent("""
     Okay, send me your MIS credentials in this format:
     `Student-ID password`
@@ -135,10 +138,6 @@ def credentials(bot, update):
         bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
         return
-
-    if Chat.query.filter(Chat.chatID == chatID).first():
-        bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
-        return ConversationHandler.END
 
     if check_login(Student_ID, passwd) == False:
         messageContent = textwrap.dedent("""

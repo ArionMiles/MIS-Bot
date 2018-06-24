@@ -7,10 +7,12 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Conve
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from scraper.spiders.moodle_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
+from scraper.spiders.itinerary_spider import scrape_itinerary
 
-from mis_functions import bunk_lecture, until80, check_login
+from mis_functions import bunk_lecture, until80, check_login, check_parent_login, crop_image
 from scraper.database import init_db, db_session
 from scraper.models import Chat, Lecture, Practical
+from sqlalchemy import and_
 
 TOKEN = os.environ['TOKEN']
 updater = Updater(TOKEN)
@@ -22,7 +24,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 #Define state
-CREDENTIALS = 0
+CREDENTIALS, PARENT_LGN = range(2)
 CHOOSING, INPUT, CALCULATING = range(3)
 
 def start(bot, update):
@@ -42,11 +44,25 @@ def start(bot, update):
         disable_web_page_preview=True)
     return CREDENTIALS
 
-def register(bot, update):
+def register(bot, update, user_data):
     """Let all users register with their credentials."""
+    init_db()
     if Chat.query.filter(Chat.chatID == update.message.chat_id).first():
-        bot.sendMessage(chat_id=update.message.chat_id, text="Already Registered!")
-        return ConversationHandler.END
+        if Chat.query.filter(and_(Chat.chatID == update.message.chat_id, Chat.DOB != None)).first():
+            messageContent = "Already registered!"
+            bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+            return ConversationHandler.END
+
+        student_data = Chat.query.filter(Chat.chatID == update.message.chat_id).first()
+        user_data['Student_ID'] = student_data.PID
+        
+        messageContent = textwrap.dedent("""
+        Now enter your Date of Birth (DOB) in the following format:
+        `DD/MM/YYYY`
+        """)
+        update.message.reply_text(messageContent, parse_mode='markdown')
+        return PARENT_LGN
+
     messageContent = textwrap.dedent("""
     Okay, send me your MIS credentials in this format:
     `Student-ID password`
@@ -112,6 +128,54 @@ def results(bot, job):
 def fetch_results(bot, update, job_queue):
     updater.job_queue.run_once(results, 0, context=update)
 
+def itinerary(bot, update, args):
+    #update = job.context
+    # Get chatID and user details based on chatID
+    chatID = update.message.chat_id
+
+    #If registered, but DOB is absent from the DB
+    if not Chat.query.filter(and_(Chat.chatID == chatID, Chat.DOB != None)).first():
+        bot.sendMessage(chat_id=update.message.chat_id, text="📋 Unregistered! Please use /register to start.")
+        return
+
+    userChat = Chat.query.filter(Chat.chatID == chatID).first()
+    Student_ID = userChat.PID
+    DOB = userChat.DOB
+
+    if args:
+        bot.send_chat_action(chat_id=update.message.chat_id, action='upload_document')
+    else:
+        bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
+
+    #Run ItinerarySpider
+    scrape_itinerary(Student_ID, DOB)
+
+    try:
+        with open("files/{}_itinerary.png".format(Student_ID), "rb") as f:
+            pass
+    except IOError:
+        bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
+        logger.warning("Something went wrong! Check if the Splash server is up.")
+        return
+
+    if args:
+        #arguments supplied, sending full screenshot
+        bot.send_document(chat_id=update.message.chat_id, document=open("files/{}_itinerary.png".format(Student_ID),'rb'),
+                   caption='Full Itinierary Report for {}'.format(Student_ID))
+        os.remove('files/{}_itinerary.png'.format(Student_ID)) #Delete original downloaded image
+        return
+
+    if crop_image("files/{}_itinerary.png".format(Student_ID)):
+        #greater than 800px. cropping and sending..
+        bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_itinerary_cropped.png".format(Student_ID),'rb'),
+                   caption='Itinerary Report for {}'.format(Student_ID))
+        os.remove('files/{}_itinerary_cropped.png'.format(Student_ID)) #Delete cropped image
+    else:
+        #less than 800px, sending as it is..
+        bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_itinerary.png".format(Student_ID),'rb'),
+                   caption='Itinerary Report for {}'.format(Student_ID))
+        os.remove('files/{}_itinerary.png'.format(Student_ID)) #Delete original downloaded image
+
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%"""
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
@@ -121,9 +185,8 @@ def until_eighty(bot, update):
         messageContent = 'No. of lectures to attend: ' + str(until80(update.message.chat_id))
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
-def credentials(bot, update):
+def credentials(bot, update, user_data):
     """Store user credentials in a database."""
-    user = update.message.from_user
     chatID = update.message.chat_id
     #If message contains less or more than 2 arguments, send message and stop. 
     try:
@@ -139,7 +202,7 @@ def credentials(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
         return
 
-    if check_login(Student_ID, passwd) == False:
+    if not check_login(Student_ID, passwd):
         messageContent = textwrap.dedent("""
         Looks like your credentials are incorrect! Give it one more shot.
         This is what valid login credentials look like:
@@ -147,8 +210,6 @@ def credentials(bot, update):
         """)
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
         return
-
-    logger.info("New Registration! Username: %s" % (Student_ID))
     
     # Create an object of Class <Chat> and store Student_ID, password, and Telegeram
     # User ID, Add it to the database, commit it to the database. 
@@ -157,8 +218,36 @@ def credentials(bot, update):
     db_session.add(userChat)
     db_session.commit()
 
+    
+    messageContent = textwrap.dedent("""
+        Now enter your Date of Birth (DOB) in the following format:
+        `DD/MM/YYYY`
+        """)
+    update.message.reply_text(messageContent, parse_mode='markdown')
+    user_data['Student_ID'] = Student_ID
+    return PARENT_LGN
+
+def parent_login(bot, update, user_data):
+    DOB = update.message.text
+    Student_ID = user_data['Student_ID']
+    chatID = update.message.chat_id
+
+    if not check_parent_login(Student_ID, DOB):
+        messageContent = textwrap.dedent("""
+        Looks like your Date of Birth details are incorrect! Give it one more shot.
+        Send DOB in the below format:
+        `DD/MM/YYYY`
+        """)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
+        return
     new_user = Student_ID[3:-4].title()
-    update.message.reply_text("Welcome {}!\nStart by checking your /attendance".format(new_user))
+
+    db_session.query(Chat).filter(Chat.chatID == chatID).update({'DOB': DOB})
+    db_session.commit()
+    logger.info("New Registration! Username: %s" % (Student_ID))
+
+    messageContent = "Welcome {}!\nStart by checking your /attendance or /itinerary".format(new_user)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
     return ConversationHandler.END
 
 def delete(bot, update):
@@ -313,10 +402,11 @@ def main():
     dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(
-            entry_points=[CommandHandler('start', start), CommandHandler('register', register)],
+            entry_points=[CommandHandler('start', start), CommandHandler('register', register, pass_user_data=True)],
 
             states={
-                CREDENTIALS: [MessageHandler(Filters.text, credentials)]
+                CREDENTIALS: [MessageHandler(Filters.text, credentials, pass_user_data=True)],
+                PARENT_LGN: [MessageHandler(Filters.text, parent_login, pass_user_data=True)]
             },
 
             fallbacks=[CommandHandler('cancel', cancel)]
@@ -338,6 +428,7 @@ def main():
     start_handler = CommandHandler('start', start)
     attendance_handler = CommandHandler('attendance', fetch_attendance, pass_job_queue=True)
     results_handler = CommandHandler('results', fetch_results, pass_job_queue=True)
+    itinerary_handler = CommandHandler('itinerary', itinerary, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help)
@@ -349,6 +440,7 @@ def main():
     dispatcher.add_handler(delete_handler)
     dispatcher.add_handler(attendance_handler)
     dispatcher.add_handler(results_handler)
+    dispatcher.add_handler(itinerary_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)
     dispatcher.add_handler(help_handler)

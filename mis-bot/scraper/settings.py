@@ -37,6 +37,9 @@ ITEM_PIPELINES = {
     'scraper.pipelines.PracticalPipeline': 400,
 }
 
+# Disable Telnet Console (enabled by default)
+TELNETCONSOLE_ENABLED = False
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'MIS (+http://www.yourdomain.com)'
 
@@ -53,9 +56,6 @@ ITEM_PIPELINES = {
 
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
-
-# Disable Telnet Console (enabled by default)
-#TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
 #DEFAULT_REQUEST_HEADERS = {

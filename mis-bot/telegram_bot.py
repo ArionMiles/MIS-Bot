@@ -161,7 +161,7 @@ def itinerary(bot, update, args):
     if args:
         #arguments supplied, sending full screenshot
         bot.send_document(chat_id=update.message.chat_id, document=open("files/{}_itinerary.png".format(Student_ID),'rb'),
-                   caption='Full Itinierary Report for {}'.format(Student_ID))
+                   caption='Full Itinerary Report for {}'.format(Student_ID))
         os.remove('files/{}_itinerary.png'.format(Student_ID)) #Delete original downloaded image
         return
 

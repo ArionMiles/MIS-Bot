@@ -41,11 +41,13 @@ class Chat(Base):
     id = Column(Integer, primary_key=True)
     PID = Column(String(100))
     password = Column(String(50))
+    DOB = Column(String(100))
     chatID = Column(String(512))  
 
-    def __init__(self, PID, password, chatID):
+    def __init__(self, PID=None, password=None, DOB=None, chatID=None):
         self.PID = PID
         self.password = password
+        self.DOB = DOB
         self.chatID = chatID
 
     def __repr__(self):

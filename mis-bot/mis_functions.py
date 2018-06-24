@@ -1,4 +1,5 @@
 from __future__ import division
+from PIL import Image
 from sympy.solvers import solve
 from sympy import Symbol, Eq, solveset
 import requests
@@ -48,4 +49,37 @@ def check_login(username, password):
         s.post(base_url, data=payload)
         r = s.get('http://report.aldel.org/student/attendance_report.php')
         return username in r.text
+
+def check_parent_login(username, dob):
+    '''Checks if user input for their credentials is correct.'''
+    base_url = 'http://report.aldel.org/parent_page.php'
+    try:
+        date, month, year = dob.split('/')
+    except ValueError:
+        return False
+
+    with requests.session() as s:
+        r = s.get(base_url)
+        sessionID = str(r.cookies.get('PHPSESSID')) #Get SessionID
+        captcha_answer = captcha_solver(sessionID) #Solve the CAPTCHA
+        payload = {
+        'studentid':username,
+        'date_of_birth': date,
+        'month_of_birth': month,
+        'year_of_birth': year,
+        'captcha_code':captcha_answer,
+        'parent_submit':''
+        }
+        s.post(base_url, data=payload)
+        r = s.get('http://report.aldel.org/student/attendance_report.php')
+        return username in r.text
+
+def crop_image(path):
+    img = Image.open(path)
+    w, h = img.size
+
+    if h>800:
+        new_path = path[:-4] + "_cropped.png"
+        img.crop((0, h-700, w, h)).save(new_path) #crop((left, upper, right, lower))
+        return True
 

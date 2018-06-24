@@ -42,7 +42,7 @@ I created this bot as a means to avoid Defaulter's List, and I hope this bot can
 
   * **CAPTCHA Bypass**
   
-    The bot can automatically answer the captcha code for logging in.
+    The bot can automatically answer the captcha code for logging in. Uses [securimage_solver](https://github.com/sampritipanda/securimage_solver) library.
 
 ## Setup
 If you wish to run your own instance of the bot, follow the below steps. Note that it is recommended you use Linux to host this project as it's not completely compatible with Windows. I'm constantly working on making it platform agnostic so that it can be used on any OS.

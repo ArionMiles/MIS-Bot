@@ -433,7 +433,7 @@ def main():
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help)
     tips_handler = CommandHandler('tips', tips)
-    unknown_message = MessageHandler(Filters.text, unknown)
+    unknown_message = MessageHandler(Filters.text | Filters.command, unknown)
 
     # Dispatchers
     dispatcher.add_handler(conv_handler)

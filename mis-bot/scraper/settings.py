@@ -41,7 +41,7 @@ ITEM_PIPELINES = {
 TELNETCONSOLE_ENABLED = False
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'MIS (+http://www.yourdomain.com)'
+USER_AGENT = 'Mozilla/5.0 (compatible; MISBOT/3.1.1; +https://arionmiles.me/)'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32

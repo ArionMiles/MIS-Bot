@@ -121,6 +121,7 @@ If you wish to run your own instance of the bot, follow the below steps. Note th
  * [Arush Ahuja (arush15june)](https://github.com/arush15june)
  * [Vikas Yadav (v1k45)](https://github.com/v1k45)
  * [Sampriti Panda](https://github.com/sampritipanda)
+ * [Sabine Wieluch (bleeptrack)](https://github.com/bleeptrack)
 
 # License
 MIT License. Please see [License](LICENSE.md) file for more information.

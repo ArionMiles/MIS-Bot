@@ -297,6 +297,7 @@ def itinerary(bot, update, args):
         bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_itinerary_cropped.png".format(Student_ID), 'rb'),
                        caption='Itinerary Report for {}'.format(Student_ID))
         os.remove('files/{}_itinerary_cropped.png'.format(Student_ID)) #Delete cropped image
+        os.remove('files/{}_itinerary.png'.format(Student_ID)) #Delete original downloaded image
     else:
         #less than 800px, sending as it is..
         bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_itinerary.png".format(Student_ID), 'rb'),
@@ -444,9 +445,20 @@ def bunk_input(bot, update, user_data):
     Passes control to bunk_calc()
     """
     user_data['index'] = update.message.text
+    if user_data['index'] == "/cancel_bunk":
+        # Terminate bunk operation since fallback commands do not work with 
+        # 2 conversation handlers present for some reason
+        # if you figure it out, I'll buy you coffee
+        bot.sendMessage(chat_id=update.message.chat_id, text="Bunk operation cancelled! 😊")
+        return ConversationHandler.END
+
+
     messageContent = textwrap.dedent("""
-        Send number of lectures you wish to bunk and total lectures conducted for that subject,
+        Send number of lectures you wish to bunk and total lectures conducted for that subject on that day,
         separated by a space.
+
+        e.g: If you wish to bunk 1 out of 5 lectures (total or per subject) conducted today, send
+        `1 5`
         """)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     return CALCULATING
@@ -480,8 +492,12 @@ def bunk_calc(bot, update, user_data):
 
             Loss: {loss}
             Gain: {gain}
+
+            If you wish to check for another subject, select their number from above or press /cancel_bunk to cancel
+            this operation.
             """).format(current=current, predicted=predicted, no_bunk=no_bunk, loss=loss, gain=gain)
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+        return INPUT
     else:
         messageContent = textwrap.dedent("""
             This command expects 2 arguments.

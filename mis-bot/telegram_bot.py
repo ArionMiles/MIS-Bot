@@ -13,6 +13,7 @@ from mis_functions import bunk_lecture, until80, check_login, check_parent_login
 from scraper.database import init_db, db_session
 from scraper.models import Chat, Lecture, Practical
 from sqlalchemy import and_
+from functools import wraps
 
 TOKEN = os.environ['TOKEN']
 updater = Updater(TOKEN)
@@ -26,6 +27,17 @@ logger = logging.getLogger(__name__)
 #Define state
 CREDENTIALS, PARENT_LGN = range(2)
 CHOOSING, INPUT, CALCULATING = range(3)
+
+def signed_up(func):
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        chatID = update.message.chat_id
+        if not Chat.query.filter(Chat.chatID == chatID).first():
+            bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered! Use the /register command to sign up!")
+            return
+        return func(bot, update, *args, **kwargs)
+    return wrapped
+
 
 def start(bot, update):
     """
@@ -177,9 +189,6 @@ def attendance(bot, job):
     update = job.context
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
-    if not Chat.query.filter(Chat.chatID == chatID).first():
-        bot.sendMessage(chat_id=update.message.chat_id, text="📋 Unregistered! Please use /register to start.")
-        return
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
     Student_ID = userChat.PID
     password = userChat.password
@@ -196,6 +205,7 @@ def attendance(bot, job):
         bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
         logger.warning("Something went wrong! Check if the Splash server is up.")
 
+@signed_up
 def fetch_attendance(bot, update, job_queue):
     updater.job_queue.run_once(attendance, 0, context=update)
 
@@ -213,9 +223,6 @@ def results(bot, job):
     update = job.context
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
-    if not Chat.query.filter(Chat.chatID == chatID).first():
-        bot.sendMessage(chat_id=update.message.chat_id, text="📋 Unregistered! Please use /register to start.")
-        return
     userChat = Chat.query.filter(Chat.chatID == chatID).first()
     Student_ID = userChat.PID
     password = userChat.password
@@ -232,9 +239,11 @@ def results(bot, job):
         bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
         logger.warning("Something went wrong! Check if the Splash server is up.")
 
+@signed_up
 def fetch_results(bot, update, job_queue):
     updater.job_queue.run_once(results, 0, context=update)
 
+@signed_up
 def itinerary(bot, update, args):
     """
     Core function. Fetch detailed attendance reports from Aldel's MIS (Parent's Portal).
@@ -294,6 +303,7 @@ def itinerary(bot, update, args):
                        caption='Itinerary Report for {}'.format(Student_ID))
         os.remove('files/{}_itinerary.png'.format(Student_ID)) #Delete original downloaded image
 
+@signed_up
 def until_eighty(bot, update):
     """
     Calculate number of lectures you must consecutively attend before you attendance is 80%
@@ -306,14 +316,12 @@ def until_eighty(bot, update):
         messageContent = 'No. of lectures to attend: ' + str(until80(update.message.chat_id))
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
+@signed_up
 def delete(bot, update):
     """
     Delete a user's credentials if they wish to stop using the bot or update them.
     """
     chatID = update.message.chat_id
-    if not Chat.query.filter(Chat.chatID == chatID).first():
-        bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered!")
-        return
     user_details = db_session.query(Chat).filter(Chat.chatID == chatID).first() #Pull user's username from the DB
     username = user_details.PID
     logger.info("Deleting user credentials for %s!" % (username))
@@ -369,6 +377,7 @@ def tips(bot, update):
     messageContent = random.choice(tips)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
 
+@signed_up
 def bunk(bot, update):
     """
     Starting point of bunk_handler.

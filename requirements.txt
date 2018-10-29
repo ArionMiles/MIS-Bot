@@ -3,5 +3,5 @@ Scrapy==1.4.0
 scrapy-splash==0.7.2
 SQLAlchemy==1.1.14
 sympy==1.1.1
-requests==2.18.4
+requests==2.20.0
 Pillow==5.0.0

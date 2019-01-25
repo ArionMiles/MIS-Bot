@@ -103,6 +103,14 @@ If you wish to run your own instance of the bot, follow the below steps. Note th
     
     Status: `sudo systemctl status bot`
 
+
+## Running migrations
+
+1. Make changes to `models.py`
+2. Run `alembic revision --autogenerate -m "Description of changes"`
+3. Commit the migration file present in `alembic\versions\`
+4. On the production machine, apply migrations by first pulling latest commits with `git pull` & apply with `alembic upgrade head`
+
 # Roadmap
  * ~Attendance scraper~
  * ~Bunk/Until80 functions~

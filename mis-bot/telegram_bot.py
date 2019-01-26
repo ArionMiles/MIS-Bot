@@ -340,11 +340,13 @@ def until(bot, update, args):
         E.g: `/until 75`
         """)
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
+        return
 
     try:
         figure = float(args[0])
-    except ValueError:
+    except (ValueError, IndexError):
         bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
+        return
     
     if figure > 99:
         bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")

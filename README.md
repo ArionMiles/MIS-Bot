@@ -36,6 +36,14 @@ I created this bot as a means to avoid Defaulter's List, and I hope this bot can
 
           x = number of lectures to attend
     **Note:** We calculate `x` from this equation. Value of `x` can be negative too, when your attendance is already over 80.
+  * **Until X**
+  
+    Like Until80 but you specify the percentage.
+  
+  * **Target Attendance**
+
+    Set a target of attendance percentage for yourself and we'll remind you how long you've left to go before fulfilling your target.
+
   * **Results**
 
     Fetch results of Class Tests. Uses scrapy-splash library.
@@ -104,13 +112,6 @@ If you wish to run your own instance of the bot, follow the below steps. Note th
     Status: `sudo systemctl status bot`
 
 
-## Running migrations
-
-1. Make changes to `models.py`
-2. Run `alembic revision --autogenerate -m "Description of changes"`
-3. Commit the migration file present in `alembic\versions\`
-4. On the production machine, apply migrations by first pulling latest commits with `git pull` & apply with `alembic upgrade head`
-
 # Roadmap
  * ~Attendance scraper~
  * ~Bunk/Until80 functions~
@@ -120,16 +121,12 @@ If you wish to run your own instance of the bot, follow the below steps. Note th
  * Use scrapyd to deploy spiders as opposed to [the current solution](https://stackoverflow.com/a/43661172)
  * Create an API to execute spiders.
  * Create an Android application
- 
- # Profile Photo
- ![Profile Photo](media/avatar.png)
-
 
 # Contributors
  * [Arush Ahuja (arush15june)](https://github.com/arush15june)
  * [Vikas Yadav (v1k45)](https://github.com/v1k45)
  * [Sampriti Panda](https://github.com/sampritipanda)
- * [Sabine Wieluch (bleeptrack)](https://github.com/bleeptrack)
+ * [Sabine Wieluch (bleeptrack)](https://github.com/bleeptrack) (Gave us a really cute [Profile Photo](media/avatar.png)!)
 
 # License
 MIT License. Please see [License](LICENSE.md) file for more information.

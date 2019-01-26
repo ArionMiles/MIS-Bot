@@ -31,19 +31,20 @@ def bunk_lecture(n, tot_lec, chatID, stype, index):
     result = (((int(attended) + int(tot_lec)) -  int(n))/(int(conducted) + tot_lec)) * 100
     return round(result, 2) #Round up to 2 decimals.
 
-def until80(chatID):
+def until_x(chatID, target):
     """
     Calculates the no. of lectures user must attend in order to get overall attendance to 80%
 
     Parameters:
     chatID -- user's unique 9-digit ChatID from telegram
+    target -- attendance percentage target
     """
     init_db()
     subject_data = Lecture.query.filter(and_(Lecture.chatID == chatID, Lecture.name == "Total")).first()
     attended = subject_data.attended
     conducted = subject_data.conducted
     x = Symbol('x')
-    expr = Eq((((int(attended) + x)/(int(conducted) + x))*100), 80)
+    expr = Eq((((int(attended) + x)/(int(conducted) + x))*100), target)
     soln = solveset(expr, x)
     return next(iter(soln)) # Extracting the integer from singleton set soln.
 

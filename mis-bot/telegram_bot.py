@@ -9,9 +9,9 @@ from scraper.spiders.moodle_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 from scraper.spiders.itinerary_spider import scrape_itinerary
 
-from mis_functions import bunk_lecture, until80, check_login, check_parent_login, crop_image
+from mis_functions import bunk_lecture, until_x, check_login, check_parent_login, crop_image
 from scraper.database import init_db, db_session
-from scraper.models import Chat, Lecture, Practical
+from scraper.models import Chat, Lecture, Practical, Misc
 from sqlalchemy import and_
 from functools import wraps
 
@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 #Define state
 CREDENTIALS, PARENT_LGN = range(2)
 CHOOSING, INPUT, CALCULATING = range(3)
+SET_TARGET, SELECT_YN, INPUT_TARGET = range(3)
+UPDATE_TARGET = 0
 
 def signed_up(func):
     @wraps(func)
@@ -197,9 +199,18 @@ def attendance(bot, job):
     #Run AttendanceSpider
     scrape_attendance(Student_ID, password, chatID)
 
+    student_misc = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
+
     try:
         bot.send_photo(chat_id=update.message.chat_id, photo=open("files/{}_attendance.png".format(Student_ID), 'rb'),
                        caption='Attendance Report for {}'.format(Student_ID))
+        if student_misc is not None and student_misc.attendance_target is not None:
+            target = student_misc.attendance_target
+            no_of_lectures = int(until_x(update.message.chat_id, target))
+            if no_of_lectures > 0:
+                messageContent = "You need to attend {} lectures to meet your target of {}%".format(no_of_lectures, target)
+                bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+
         os.remove('files/{}_attendance.png'.format(Student_ID)) #Delete saved image
     except IOError:
         bot.sendMessage(chat_id=update.message.chat_id, text='There were some errors.')
@@ -311,11 +322,153 @@ def until_eighty(bot, update):
     If until80() returns a negative number, attendance is already over 80%
     """
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
-    if int(until80(update.message.chat_id)) < 0:
-        bot.sendMessage(chat_id=update.message.chat_id, text="Your attendance is already over 80. Relax.")
+    no_of_lectures = int(until_x(update.message.chat_id, 80))
+    if no_of_lectures < 0:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Your attendance is already over 80%. Relax.")
     else:
-        messageContent = 'No. of lectures to attend: ' + str(until80(update.message.chat_id))
+        messageContent = "No. of lectures to attend: {}".format(no_of_lectures)
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+
+@signed_up
+def until(bot, update, args):
+    """
+    """
+    try:
+        figure = float(args[0])
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number.")
+    
+    no_of_lectures = int(until_x(update.message.chat_id, figure))
+    if no_of_lectures < 0:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Your attendance is already over {}%. Relax.".format(figure))
+    else:
+        messageContent = "No. of lectures to attend: {}".format(no_of_lectures)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+
+@signed_up
+def attendance_target(bot, update):
+    """Like until80, but with user specified target attendance percentage.
+    If target isn't set, asks users whether they'd like to and passes control to 
+    set_target()
+    """
+    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
+
+    student_misc = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
+    
+    if student_misc is None:
+        new_misc_record = Misc(chatID=update.message.chat_id)
+        db_session.add(new_misc_record)
+        db_session.commit()
+        logger.info("Created new Misc record for {}".format(update.message.chat_id))
+        # bot.sendMessage(chat_id=update.message.chat_id, text="No records found!")
+        student_misc = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
+    
+    target = student_misc.attendance_target
+    
+    if target is None:
+        messageContent = "You have not set a target yet. Would you like to set it now?"
+        keyboard = [['Yes'], ['No']]
+        reply_markup = ReplyKeyboardMarkup(keyboard)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
+        return SELECT_YN
+
+    no_of_lectures = int(until_x(update.message.chat_id, target))
+    if no_of_lectures < 0:
+        messageContent = "Your attendance is already over {}%. Maybe set it higher?".format(target)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+        return ConversationHandler.END
+    
+    messageContent = "You need to attend {} lectures to meet your target of {}%".format(no_of_lectures, target)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    return ConversationHandler.END
+
+
+def select_yn(bot, update):
+    """
+    """
+    reply_markup = ReplyKeyboardRemove()
+    
+    if update.message.text == 'No':
+        messageContent = "Maybe next time!"
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
+        return ConversationHandler.END
+    messageContent = textwrap.dedent("""
+    Okay, give me a figure!
+
+    e.g: If you want a target of 80%, send `80`
+    """)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown', reply_markup=reply_markup)
+    return INPUT_TARGET
+
+
+def input_target(bot, update):
+    """
+    """
+    try:
+        target_figure = float(update.message.text)
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
+        return
+    
+    if target_figure > 99:
+        bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
+        return
+
+    db_session.query(Misc).filter(Misc.chatID == update.message.chat_id).update({'attendance_target': target_figure})
+    db_session.commit()
+    messageContent = "Your attendance target has been set to {}%.".format(target_figure)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    return ConversationHandler.END
+
+@signed_up
+def edit_attendance_target(bot, update):
+    """
+    """
+    student_misc_model = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
+    messageContent = "You do not have any target records. To create one, use /target"
+    if student_misc_model is None:
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+        return ConversationHandler.END
+
+    current_target = student_misc_model.attendance_target
+
+    if current_target is None:
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+        return ConversationHandler.END
+    
+    edit_message = textwrap.dedent("""
+    Your current attendance target is {}%.
+    Send a new figure to update or /cancel to cancel this operation
+    """.format(current_target))
+
+    bot.sendMessage(chat_id=update.message.chat_id, text=edit_message)
+    return UPDATE_TARGET
+
+def update_target(bot, update):
+    """
+    """
+    user_reply = update.message.text
+
+    if user_reply == '/cancel':
+        bot.sendMessage(chat_id=update.message.chat_id, text="As you wish! The operation is cancelled!")
+        return ConversationHandler.END
+    
+    try:
+        new_target = int(user_reply)
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
+        return
+    
+    if new_target > 99:
+        bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
+        return
+
+    db_session.query(Misc).filter(Misc.chatID == update.message.chat_id).update({'attendance_target': new_target})
+    db_session.commit()
+    new_target_message = "Your attendance target has been updated to {}%!".format(new_target)
+    bot.sendMessage(chat_id=update.message.chat_id, text=new_target_message)
+    return ConversationHandler.END
+
 
 @signed_up
 def delete(bot, update):
@@ -342,8 +495,9 @@ def unknown(bot, update):
     """
     Respond to incomprehensible messages/commands with some canned responses.
     """
-    can = ["Seems like I'm not programmed to understand this yet.", "I'm not a fully functional A.I. ya know?", \
-    "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "Damn you're dumb.", "42"]
+    can = ["Seems like I'm not programmed to understand this yet.", "I'm not a fully functional A.I. ya know?",
+    "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "Damn you're dumb.", "42",
+    "We cannot afford machine learning to make this bot smart!", "We don't use NLP.", "I really wish we had a neural network."]
     messageContent = random.choice(can)
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
@@ -460,7 +614,7 @@ def bunk_input(bot, update, user_data):
         e.g: If you wish to bunk 1 out of 5 lectures (total or per subject) conducted today, send
         `1 5`
         """)
-    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
     return CALCULATING
 
 def bunk_calc(bot, update, user_data):
@@ -514,6 +668,7 @@ def main():
     init_db()
     dispatcher = updater.dispatcher
 
+    # Handlers
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start), CommandHandler('register', register, pass_user_data=True)],
 
@@ -537,11 +692,30 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)]
         )
 
-    # Handlers
+    attendance_target_handler = ConversationHandler(
+        entry_points=[CommandHandler('target', attendance_target)],
+        states={
+            SELECT_YN: [MessageHandler(Filters.text, select_yn)],
+            INPUT_TARGET: [MessageHandler(Filters.text, input_target)]
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel)]
+    )
+
+    edit_attendance_target_handler = ConversationHandler(
+        entry_points=[CommandHandler('edit_target', edit_attendance_target)],
+        states={
+            UPDATE_TARGET: [MessageHandler(Filters.text | Filters.command, update_target)],
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel)]
+    )
+
     attendance_handler = CommandHandler('attendance', fetch_attendance, pass_job_queue=True)
     results_handler = CommandHandler('results', fetch_results, pass_job_queue=True)
     itinerary_handler = CommandHandler('itinerary', itinerary, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
+    until_handler = CommandHandler('until', until, pass_args=True)
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help_text)
     tips_handler = CommandHandler('tips', tips)
@@ -555,20 +729,27 @@ def main():
     dispatcher.add_handler(itinerary_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)
+    dispatcher.add_handler(until_handler)
+    dispatcher.add_handler(attendance_target_handler)
+    dispatcher.add_handler(edit_attendance_target_handler)
     dispatcher.add_handler(help_handler)
     dispatcher.add_handler(tips_handler)
     dispatcher.add_handler(unknown_message)
 
-    webhook_url = 'https://%s:8443/%s'%(os.environ['URL'], TOKEN)
-
-    updater.start_webhook(listen='0.0.0.0',
-                          port=8443,
-                          url_path=TOKEN,
-                          key='files/private.key',
-                          cert='files/cert.pem',
-                          webhook_url=webhook_url,
-                          clean=True)
-    updater.idle()
+    if DEBUG:
+        updater.start_polling(clean=True)
+        updater.idle()
+    else:
+        webhook_url = 'https://%s:8443/%s'%(os.environ['URL'], TOKEN)
+        updater.start_webhook(listen='0.0.0.0',
+                            port=8443,
+                            url_path=TOKEN,
+                            key='files/private.key',
+                            cert='files/cert.pem',
+                            webhook_url=webhook_url,
+                            clean=True)
+        updater.idle()
 
 if __name__ == '__main__':
+    DEBUG = True # Do not have this variable as True in production
     main()

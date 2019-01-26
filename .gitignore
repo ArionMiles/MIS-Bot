@@ -109,8 +109,6 @@ test\.bat
 
 *.json
 
-*.ini
-
 *.db
 
 /misbot/
@@ -141,3 +139,7 @@ mis-bot/testCaptcha\.py
 mis-bot/scraper/\.ipynb_checkpoints/
 
 mis-bot/files/crop\.py
+
+venvwsl/
+
+chats_migrations/

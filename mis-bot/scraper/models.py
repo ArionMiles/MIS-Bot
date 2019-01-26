@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Float
 from scraper.database import Base
 
 class Lecture(Base):
@@ -52,3 +52,16 @@ class Chat(Base):
 
     def __repr__(self):
         return '<Chat {} chatID: {}>'.format(self.PID, self.chatID)
+
+class Misc(Base):
+    __tablename__ = 'misc'
+    id = Column(Integer, primary_key=True)
+    chatID = Column(String(512))
+    attendance_target = Column(Float)
+
+    def __init__(self, chatID=chatID, attendance_target=None):
+        self.chatID = chatID
+        self.attendance_target = attendance_target
+    
+    def __repr(self):
+        return '<Misc chatID: {}>'.format(self.chatId)

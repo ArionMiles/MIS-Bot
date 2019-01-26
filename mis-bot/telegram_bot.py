@@ -348,6 +348,7 @@ def until(bot, update, args):
     
     if figure > 99:
         bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
+        return
 
     no_of_lectures = int(until_x(update.message.chat_id, figure))
     if no_of_lectures < 0:

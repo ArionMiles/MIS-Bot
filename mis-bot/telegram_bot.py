@@ -339,7 +339,7 @@ def until(bot, update, args):
 
         E.g: `/until 75`
         """)
-        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
 
     try:
         figure = float(args[0])

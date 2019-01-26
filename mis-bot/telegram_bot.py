@@ -333,11 +333,22 @@ def until_eighty(bot, update):
 def until(bot, update, args):
     """
     """
+    if len(args) == 0:
+        messageContent = textwrap.dedent("""
+        You must specify a number after the command to use this feature.
+
+        E.g: `/until 75`
+        """)
+        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+
     try:
         figure = float(args[0])
     except ValueError:
-        bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number.")
+        bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
     
+    if figure > 99:
+        bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
+
     no_of_lectures = int(until_x(update.message.chat_id, figure))
     if no_of_lectures < 0:
         bot.sendMessage(chat_id=update.message.chat_id, text="Your attendance is already over {}%. Relax.".format(figure))

@@ -417,7 +417,11 @@ def attendance_target(bot, update):
     target = student_misc.attendance_target
     
     if target is None:
-        messageContent = "You have not set a target yet. Would you like to set it now?"
+
+        messageContent = textwrap.dedent("""
+        You have not set a target yet. Would you like to set it now?
+        You can change it anytime using /edit_target
+        """)
         keyboard = [['Yes'], ['No']]
         reply_markup = ReplyKeyboardMarkup(keyboard)
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
@@ -425,7 +429,7 @@ def attendance_target(bot, update):
 
     no_of_lectures = int(until_x(update.message.chat_id, target))
     if no_of_lectures < 0:
-        messageContent = "Your attendance is already over {}%. Maybe set it higher?".format(target)
+        messageContent = "Your attendance is already over {}%. Maybe set it higher? Use /edit_target to change it.".format(target)
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
         return ConversationHandler.END
     

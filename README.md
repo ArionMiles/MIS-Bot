@@ -69,6 +69,7 @@ If you wish to run your own instance of the bot, follow the below steps. Note th
      TOKEN="your_bot_token"
      SPLASH_INSTANCE="your_splash_instance_ip_addr:8050"
      URL="server_ip_addr"
+     ADMIN_CHAT_ID="Admin's telegram chat ID"
      ```
      Save your changes with `Ctrl-O`, and exit with `Ctrl-X`
 

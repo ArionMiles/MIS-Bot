@@ -10,6 +10,7 @@ from scraper.spiders.results_spider import scrape_results
 from scraper.spiders.itinerary_spider import scrape_itinerary
 
 from mis_functions import bunk_lecture, until_x, check_login, check_parent_login, crop_image
+from push_notifications import push_message_threaded, get_user_list
 from scraper.database import init_db, db_session
 from scraper.models import Chat, Lecture, Practical, Misc
 from sqlalchemy import and_
@@ -29,6 +30,7 @@ CREDENTIALS, PARENT_LGN = range(2)
 CHOOSING, INPUT, CALCULATING = range(3)
 SET_TARGET, SELECT_YN, INPUT_TARGET = range(3)
 UPDATE_TARGET = 0
+NOTIF_MESSAGE, NOTIF_CONFIRM = range(2)
 
 def signed_up(func):
     @wraps(func)
@@ -36,6 +38,23 @@ def signed_up(func):
         chatID = update.message.chat_id
         if not Chat.query.filter(Chat.chatID == chatID).first():
             bot.sendMessage(chat_id=update.message.chat_id, text="Unregistered! Use the /register command to sign up!")
+            return
+        return func(bot, update, *args, **kwargs)
+    return wrapped
+
+
+def admin(func):
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        chatID = update.message.chat_id
+        if not str(chatID) == os.environ['ADMIN_CHAT_ID']:
+            messageContent = "You are not authorized to use this command. This incident has been reported."
+            bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+            user_info = Chat.query.filter(Chat.chatID == chatID).first()
+            if user_info:
+                logger.warning("Unauthorized Access attempt by {}".format(user_info.PID))
+            else:
+                logger.warning("Unauthorized Access attempt by {}".format(chatID))
             return
         return func(bot, update, *args, **kwargs)
     return wrapped
@@ -331,7 +350,16 @@ def until_eighty(bot, update):
 
 @signed_up
 def until(bot, update, args):
-    """
+    """Like `until_eighty` but user supplies the number.
+
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param args: User supplied arguments
+    :type args: tuple
+    :return: None
+    :rtype: None
     """
     if len(args) == 0:
         messageContent = textwrap.dedent("""
@@ -361,10 +389,19 @@ def until(bot, update, args):
 
 @signed_up
 def attendance_target(bot, update):
-    """Like until80, but with user specified target attendance percentage.
+    """Like `until_eighty`, but with user specified target attendance percentage
+    which is stored in the Misc table.
     If target isn't set, asks users whether they'd like to and passes control to 
-    set_target()
+    `select_yn`
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :return: SELECT_YN
+    :rtype: int
     """
+
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
 
     student_misc = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
@@ -398,7 +435,15 @@ def attendance_target(bot, update):
 
 
 def select_yn(bot, update):
-    """
+    """If user replies no, ends the conversation,
+    otherwise transfers control to `input_target`.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :return: INPUT_TARGET
+    :rtype: int
     """
     reply_markup = ReplyKeyboardRemove()
     
@@ -416,8 +461,17 @@ def select_yn(bot, update):
 
 
 def input_target(bot, update):
+    """If the user reply is a int/float and between 1-99, stores the figure 
+    as the new attendance target.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :return: ConversationHandler.END
+    :rtype: int
     """
-    """
+
     try:
         target_figure = float(update.message.text)
     except ValueError:
@@ -436,8 +490,16 @@ def input_target(bot, update):
 
 @signed_up
 def edit_attendance_target(bot, update):
-    """
-    """
+    """Edit existing attendance target. Shows current target and transfers
+    control to `update_target`
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :return: UPDATE_TARGET
+    :rtype: int
+    """    
     student_misc_model = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
     messageContent = "You do not have any target records. To create one, use /target"
     if student_misc_model is None:
@@ -459,8 +521,16 @@ def edit_attendance_target(bot, update):
     return UPDATE_TARGET
 
 def update_target(bot, update):
+    """Takes the sent figure and sets it as new attendance target.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :return: ConversationHandler.END
+    :rtype: int
     """
-    """
+
     user_reply = update.message.text
 
     if user_reply == '/cancel':
@@ -677,6 +747,72 @@ def bunk_calc(bot, update, user_data):
         return
     return ConversationHandler.END
 
+@admin
+def push_notification(bot, update):
+    """Starts Push notification conversation. Asks for message.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :return: NOTIF_MESSAGE
+    :rtype: int
+    """
+
+    bot.sendMessage(chat_id=update.message.chat_id, text="Send me the text")
+    return NOTIF_MESSAGE
+
+
+def notification_message(bot, update, user_data):
+    """Ask for confirmation, stores the message in `user_data`,
+    transfer control to :py:func:`notification_confirm`
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param user_data: User data dictionary
+    :type user_data: dict
+    :return: NOTIF_CONFIRM
+    :rtype: int
+    """
+
+
+    user_data['notif_message']= update.message.text
+    keyboard = [['Yes'], ['No']]
+    reply_markup = ReplyKeyboardMarkup(keyboard)
+    bot.sendMessage(chat_id=update.message.chat_id, text="Requesting confirmation...", reply_markup=reply_markup)
+    return NOTIF_CONFIRM
+
+
+def notification_confirm(bot, update, user_data):
+    """Sends message if "Yes" is sent. Aborts if "No" is sent.
+    Sends a message with statistics like users reached, time taken after sending
+    push notification.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param user_data: User data dictionary
+    :type user_data: dict
+    :return: ConversationHandler.END
+    :rtype: int
+    """
+
+    reply_markup = ReplyKeyboardRemove()
+    if update.message.text == "Yes":
+        users = get_user_list()
+        bot.sendMessage(chat_id=update.message.chat_id, text="Sending push message...", reply_markup=reply_markup)
+        time_taken = push_message_threaded(user_data['notif_message'], users)
+        stats_message = "Sent to {} users in {:.2f}secs".format(len(users), time_taken)
+        bot.sendMessage(chat_id=update.message.chat_id, text=stats_message)
+        return ConversationHandler.END
+    elif update.message.text == "No":
+        bot.sendMessage(chat_id=update.message.chat_id, text="Aborted!", reply_markup=reply_markup)
+        return ConversationHandler.END
+    return
+
 def main():
     """Start the bot and use webhook to detect and respond to new messages."""
     init_db()
@@ -725,6 +861,17 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)]
     )
 
+    push_notification_handler = ConversationHandler(
+        entry_points=[CommandHandler('push', push_notification)],
+        
+        states={
+            NOTIF_MESSAGE: [MessageHandler(Filters.text, notification_message, pass_user_data=True)],
+            NOTIF_CONFIRM: [MessageHandler(Filters.text, notification_confirm, pass_user_data=True)],
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel)]
+    )
+
     attendance_handler = CommandHandler('attendance', fetch_attendance, pass_job_queue=True)
     results_handler = CommandHandler('results', fetch_results, pass_job_queue=True)
     itinerary_handler = CommandHandler('itinerary', itinerary, pass_args=True)
@@ -748,6 +895,7 @@ def main():
     dispatcher.add_handler(edit_attendance_target_handler)
     dispatcher.add_handler(help_handler)
     dispatcher.add_handler(tips_handler)
+    dispatcher.add_handler(push_notification_handler)
     dispatcher.add_handler(unknown_message)
 
     if DEBUG:

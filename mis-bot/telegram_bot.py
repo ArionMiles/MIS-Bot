@@ -765,5 +765,5 @@ def main():
         updater.idle()
 
 if __name__ == '__main__':
-    DEBUG = True # Do not have this variable as True in production
+    DEBUG = False # Do not have this variable as True in production
     main()

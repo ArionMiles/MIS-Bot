@@ -785,7 +785,8 @@ def notification_message(bot, update, user_data):
     user_data['notif_message']= update.message.text
     keyboard = [['Yes'], ['No']]
     reply_markup = ReplyKeyboardMarkup(keyboard)
-    bot.sendMessage(chat_id=update.message.chat_id, text="Requesting confirmation...", reply_markup=reply_markup)
+    messageContent = "This message will be sent to {} users. Requesting confirmation...".format(len(get_user_list()))
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
     return NOTIF_CONFIRM
 
 

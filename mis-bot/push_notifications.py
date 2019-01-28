@@ -41,7 +41,10 @@ def push_t(message, chat_id):
     
     session = get_session()
     with session.post(url, payload) as resp:
-        pass
+        if resp.status_code != 200:
+            with open("failures.txt", 'a+') as f:
+                string = "{} | {}\n".format(resp.json(), chat_id)
+                f.write(string)
 
 def get_session():
     if not getattr(thread_local, "session", None):

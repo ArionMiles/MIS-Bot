@@ -5,19 +5,24 @@ from sympy import Symbol, Eq, solveset
 import requests
 from sqlalchemy import and_
 from scraper.database import init_db, db_session
-from scraper.models import Lecture, Practical
+from scraper.models import Chat, Lecture, Practical
 from scraper.captcha import captcha_solver
 
 def bunk_lecture(n, tot_lec, chatID, stype, index):
-    """
-    Bunk calculator.
-
-    Parameters:
-    n       -- no. of lectures for a subject to bunk
-    tot_lec -- total lectures conducted for that subject
-    chatID  -- user's unique 9-digit ChatID from telegram
-    stype   -- Lectures or Practicals
-    index   -- Index of the user-selected subject from list of subjects
+    """Calculates % drop/rise if one chooses to bunk certain lectures. 
+    
+    :param n: number of lectures for a subject to bunk
+    :type n: int
+    :param tot_lec: total lectures conducted for that subject
+    :type tot_lec: int
+    :param chatID: user's unique 9-digit ChatID from telegram
+    :type chatID: int | str
+    :param stype: Subject type (Lectures or Practicals)
+    :type stype: str
+    :param index: Index of the user-selected subject from list of subjects
+    :type index: int
+    :return: Percentage drop/rise
+    :rtype: float
     """
     init_db()
     if(stype == "Lectures"):
@@ -31,13 +36,17 @@ def bunk_lecture(n, tot_lec, chatID, stype, index):
     result = (((int(attended) + int(tot_lec)) -  int(n))/(int(conducted) + tot_lec)) * 100
     return round(result, 2) #Round up to 2 decimals.
 
-def until_x(chatID, target):
-    """
-    Calculates the no. of lectures user must attend in order to get overall attendance to 80%
 
-    Parameters:
-    chatID -- user's unique 9-digit ChatID from telegram
-    target -- attendance percentage target
+def until_x(chatID, target):
+    """Calculates the no. of lectures user must attend in order 
+    to get overall attendance to their specified target.
+    
+    :param chatID: user's unique 9-digit ChatID from telegram
+    :type chatID: int | str
+    :param target: attendance percentage target
+    :type target: float
+    :return: Number of lectures to attend
+    :rtype: int
     """
     init_db()
     subject_data = Lecture.query.filter(and_(Lecture.chatID == chatID, Lecture.name == "Total")).first()
@@ -48,14 +57,18 @@ def until_x(chatID, target):
     soln = solveset(expr, x)
     return next(iter(soln)) # Extracting the integer from singleton set soln.
 
-def check_login(username, password):
-    """
-    Checks if user input for their credentials is correct.
 
-    Parameters:
-    username -- student's PID (format: XXXNameXXXX)
-                where   X - integers
-    password -- student's password for student portal
+def check_login(username, password):
+    """Checks if user input for their credentials is correct
+    for the student portal.
+    
+    :param username: student's PID (format: XXXNameXXXX)
+                     where   X - integers
+    :type username: str
+    :param password: student's password for student portal
+    :type password: str
+    :return: True for correct credentials, false otherwise.
+    :rtype: bool
     """
     base_url = 'http://report.aldel.org/student_page.php'
     with requests.session() as s:
@@ -72,14 +85,18 @@ def check_login(username, password):
         r = s.get('http://report.aldel.org/student/attendance_report.php')
         return username in r.text
 
-def check_parent_login(username, dob):
-    """
-    Checks if user input for their credentials is correct.
 
-    Parameters:
-    username -- student's PID (format: XXXNameXXXX)
-                where   X - integers
-    dob      -- student's date of birth (required to log into parent's portal)
+def check_parent_login(username, dob):
+    """Checks if user input for their credentials is correct
+    for parent's portal.
+    
+    :param username: student's PID (format: XXXNameXXXX)
+                     where   X - integers
+    :type username: str
+    :param dob: Student's Date of Birth
+    :type dob: str
+    :return: True for correct credentials, false otherwise.
+    :rtype: bool
     """
     base_url = 'http://report.aldel.org/parent_page.php'
     try:
@@ -103,11 +120,14 @@ def check_parent_login(username, dob):
         r = s.get('http://report.aldel.org/student/attendance_report.php')
         return username in r.text
 
+
 def crop_image(path):
     """Crop image depending upon it's size.
-
-    Parameters:
-    path -- file path
+    
+    :param path: image file path
+    :type path: str
+    :return: True for image height larger than 800px in length.
+    :rtype: bool
     """
     img = Image.open(path)
     w, h = img.size
@@ -117,3 +137,19 @@ def crop_image(path):
         img.crop((0, h-700, w, h)).save(new_path) #crop((left, upper, right, lower))
         return True
 
+
+def get_user_info(chat_id):
+    """Give user data.
+    
+    :param chat_id: user's unique 9-digit ChatID from telegram
+    :type chat_id: str
+    :return: Dictionary of all user data
+    :rtype: dict
+    """
+    userChat = Chat.query.filter(Chat.chatID == chat_id).first()
+    Student_ID = userChat.PID
+    password = userChat.password
+    DOB = userChat.DOB
+    return {'PID': Student_ID,
+            'password': password,
+            'DOB': DOB}

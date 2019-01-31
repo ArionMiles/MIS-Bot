@@ -10,9 +10,9 @@ from scraper.spiders.results_spider import scrape_results
 from scraper.spiders.itinerary_spider import scrape_itinerary
 
 from mis_functions import bunk_lecture, until_x, check_login, check_parent_login, crop_image
-from push_notifications import push_message_threaded, get_user_list
+from push_notifications import push_message_threaded, get_user_list, delete_threaded
 from scraper.database import init_db, db_session
-from scraper.models import Chat, Lecture, Practical, Misc
+from scraper.models import Chat, Lecture, Practical, Misc, PushNotification, PushMessage
 from sqlalchemy import and_
 from functools import wraps
 
@@ -31,6 +31,7 @@ CHOOSING, INPUT, CALCULATING = range(3)
 SET_TARGET, SELECT_YN, INPUT_TARGET = range(3)
 UPDATE_TARGET = 0
 NOTIF_MESSAGE, NOTIF_CONFIRM = range(2)
+ASK_UUID, CONFIRM_REVERT = range(2)
 
 def signed_up(func):
     @wraps(func)
@@ -785,7 +786,7 @@ def notification_message(bot, update, user_data):
     user_data['notif_message']= update.message.text
     keyboard = [['Yes'], ['No']]
     reply_markup = ReplyKeyboardMarkup(keyboard)
-    messageContent = "This message will be sent to {} users. Requesting confirmation...".format(len(get_user_list()))
+    messageContent = "Targeting {} users. Requesting confirmation...".format(len(get_user_list()))
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
     return NOTIF_CONFIRM
 
@@ -809,14 +810,98 @@ def notification_confirm(bot, update, user_data):
     if update.message.text == "Yes":
         users = get_user_list()
         bot.sendMessage(chat_id=update.message.chat_id, text="Sending push message...", reply_markup=reply_markup)
-        time_taken = push_message_threaded(user_data['notif_message'], users)
-        stats_message = "Sent to {} users in {:.2f}secs".format(len(users), time_taken)
-        bot.sendMessage(chat_id=update.message.chat_id, text=stats_message)
+        time_taken, message_uuid = push_message_threaded(bot, user_data['notif_message'], users)
+        stats_message = textwrap.dedent("""
+        Sent to {} users in {:.2f}secs.
+        Here's your unique notification ID: `{}`
+        """.format(len(users), time_taken, message_uuid))
+        bot.sendMessage(chat_id=update.message.chat_id, text=stats_message, parse_mode='markdown')
         return ConversationHandler.END
     elif update.message.text == "No":
         bot.sendMessage(chat_id=update.message.chat_id, text="Aborted!", reply_markup=reply_markup)
         return ConversationHandler.END
     return
+
+@admin
+def revert_notification(bot, update):
+    """Delete a previously sent push notification.
+    Ask for UUID of message to delete and pass control to :func:`ask_uuid`
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    """
+    messageContent = "Send the UUID of the message you wish to revert." 
+    update.message.reply_text(messageContent)
+    return ASK_UUID
+
+def ask_uuid(bot, update, user_data):
+    """Store the uuid, send confirmation message
+    and pass control to :func:`confirm_revert`
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param user_data: Conversation data
+    :type user_data: dict
+    """
+    user_data['uuid'] = update.message.text
+    keyboard = [['Yes'], ['No']]
+    reply_markup = ReplyKeyboardMarkup(keyboard)
+    messageContent = "Are you sure you want to revert?"
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
+    return CONFIRM_REVERT
+
+def confirm_revert(bot, update, user_data):
+    """If Yes, revert the specified message for all
+    users and send a summary of the operation to admin.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param user_data: Conversation data
+    :type user_data: dict
+    """
+    reply_markup = ReplyKeyboardRemove()
+    
+    if update.message.text == "Yes":
+        try:
+            notification_message = PushMessage.query.filter(PushMessage.uuid == user_data['uuid']).first().text
+        except AttributeError:
+            bot.sendMessage(chat_id=update.message.chat_id, text="Unknown UUID. Try again.", reply_markup=reply_markup)
+            return ConversationHandler.END
+        notifications = PushNotification.query.filter(and_(PushNotification.message_uuid == user_data['uuid'],\
+                                                           PushNotification.sent == True))
+        user_list = [notification.chatID for notification in notifications]
+        message_ids = [notification.message_id for notification in notifications]
+        
+        time_taken = delete_threaded(bot, message_ids, user_list)
+        
+        
+        notification_message_short = textwrap.shorten(notification_message, width=20, placeholder='...')
+        
+        stats_message = textwrap.dedent("""
+        Deleted the notification:
+        ```
+        {}
+        ```
+        {} messages deleted in {:.2f}secs.
+        """.format(notification_message_short, len(message_ids), time_taken))
+        
+        bot.sendMessage(chat_id=update.message.chat_id, text=stats_message, parse_mode='markdown', reply_markup=reply_markup)
+        
+        db_session.query(PushMessage).filter(PushMessage.uuid == user_data['uuid']).update({'deleted': True})
+        db_session.commit()
+        return ConversationHandler.END
+    elif update.message.text == "No" or update.message.text == "/cancel":
+        bot.sendMessage(chat_id=update.message.chat_id, text="Revert Aborted!", reply_markup=reply_markup)
+        return ConversationHandler.END
+    return
+
+
 
 def main():
     """Start the bot and use webhook to detect and respond to new messages."""
@@ -877,6 +962,17 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)]
     )
 
+    delete_notification_handler = ConversationHandler(
+        entry_points=[CommandHandler('revert', revert_notification)],
+        
+        states={
+            ASK_UUID: [MessageHandler(Filters.text, ask_uuid, pass_user_data=True)],
+            CONFIRM_REVERT: [MessageHandler(Filters.text | Filters.command, confirm_revert, pass_user_data=True)],
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel)]
+    )
+
     attendance_handler = CommandHandler('attendance', fetch_attendance, pass_job_queue=True)
     results_handler = CommandHandler('results', fetch_results, pass_job_queue=True)
     itinerary_handler = CommandHandler('itinerary', itinerary, pass_args=True)
@@ -901,6 +997,7 @@ def main():
     dispatcher.add_handler(help_handler)
     dispatcher.add_handler(tips_handler)
     dispatcher.add_handler(push_notification_handler)
+    dispatcher.add_handler(delete_notification_handler)
     dispatcher.add_handler(unknown_message)
 
     if DEBUG:

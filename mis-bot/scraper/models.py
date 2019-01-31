@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float
+import uuid
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
 from scraper.database import Base
 
 class Lecture(Base):
@@ -65,3 +67,41 @@ class Misc(Base):
     
     def __repr(self):
         return '<Misc chatID: {}>'.format(self.chatId)
+
+
+def generate_uuid():
+    return str(uuid.uuid4())
+
+class PushMessage(Base):
+    __tablename__ = 'pushmessages'
+    uuid = Column(String(512), primary_key=True, default=generate_uuid)
+    text = Column(String(4096))
+    deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.now)
+    
+    def __init__(self, text=text, created_at=None):
+        self.text = text
+        self.created_at = created_at
+
+    def __repr__(self):
+        return '<{} | {}>'.format(self.uuid, self.text)
+
+class PushNotification(Base):
+    __tablename__ = 'pushnotifications'
+    id = Column(Integer, primary_key=True)
+    message_uuid = Column(String(512))
+    chatID = Column(String(512))
+    message_id = Column(Integer, default=0)
+    sent = Column(Boolean, default=False)
+    failure_reason = Column(String(512))
+
+    def __init__(self, message_uuid=message_uuid, chatID=chatID, message_id=message_id, sent=sent, failure_reason=None):
+        self.message_uuid = message_uuid
+        self.chatID = chatID
+        self.message_id = message_id
+        self.sent = sent
+        self.failure_reason = failure_reason
+
+    def __repr__(self):
+        return '<Push Notification {} | {}>'.format(self.chatID, self.message_id)
+

@@ -810,7 +810,7 @@ def notification_confirm(bot, update, user_data):
     if update.message.text == "Yes":
         users = get_user_list()
         bot.sendMessage(chat_id=update.message.chat_id, text="Sending push message...", reply_markup=reply_markup)
-        time_taken, message_uuid = push_message_threaded(bot, user_data['notif_message'], users)
+        time_taken, message_uuid = push_message_threaded(user_data['notif_message'], users)
         stats_message = textwrap.dedent("""
         Sent to {} users in {:.2f}secs.
         Here's your unique notification ID: `{}`
@@ -878,7 +878,7 @@ def confirm_revert(bot, update, user_data):
         user_list = [notification.chatID for notification in notifications]
         message_ids = [notification.message_id for notification in notifications]
         
-        time_taken = delete_threaded(bot, message_ids, user_list)
+        time_taken = delete_threaded(message_ids, user_list)
         
         
         notification_message_short = textwrap.shorten(notification_message, width=20, placeholder='...')

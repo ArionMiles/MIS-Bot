@@ -5,6 +5,8 @@ import threading
 from functools import partial
 
 import requests
+from telegram.bot import Bot
+from telegram.utils.request import Request
 
 from scraper.database import init_db, db_session
 from scraper.models import Chat, PushNotification,PushMessage
@@ -23,13 +25,18 @@ def get_user_list():
     users_list = [user for user, in users_tuple]
     return users_list
 
-def push_message_threaded(bot, message, user_list):
+def get_bot():
+    request = Request(con_pool_size=30) # Increasing default connection pool from 1
+    bot = Bot(API_KEY_TOKEN, request=request)
+    return bot
+
+def push_message_threaded(message, user_list):
     push_message = PushMessage(text=message)
     db_session.add(push_message)
     db_session.commit()
     
     message_uuid = push_message.uuid
-    push = partial(push_t, bot, message, message_uuid) # Adding message string and uuid as function parameter
+    push = partial(push_t, get_bot(), message, message_uuid) # Adding message string and uuid as function parameter
     
     start = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
@@ -52,8 +59,8 @@ def push_t(bot, message, message_uuid, chat_id):
         push_message_record = PushNotification(message_uuid=message_uuid, chatID=chat_id, failure_reason=str(e))
         list_of_objs.append(push_message_record)
 
-def delete_threaded(bot, message_id_list, user_list):
-    delete_func = partial(delete, bot)
+def delete_threaded(message_id_list, user_list):
+    delete_func = partial(delete, get_bot())
     start = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
         executor.map(delete_func, message_id_list, user_list)
@@ -64,11 +71,9 @@ def delete(bot, message_id, chat_id):
     bot.delete_message(chat_id, message_id)
 
 if __name__ == '__main__':
-    from telegram.bot import Bot
-    bot = Bot(API_KEY_TOKEN)
     message = input("Enter message: ")
     print("No. of recepients: {}".format(len(get_user_list())))
     
-    elapsed, message_uuid = push_message_threaded(bot, message, get_user_list())
+    elapsed, message_uuid = push_message_threaded(message, get_user_list())
     
     print("Time taken for threaded func: {:.2f}s\n {}".format(elapsed, message_uuid))

@@ -5,6 +5,8 @@ import textwrap
 import random
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from dotenv import load_dotenv
+load_dotenv(verbose=True)
 
 from misbot.admin import push_notification, notification_message, notification_confirm, revert_notification, \
 ask_uuid, confirm_revert

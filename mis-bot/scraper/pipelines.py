@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
+from os import remove, environ
+import logging
 
-from scraper.database import init_db, db_session
-from scraper.models import Lecture, Practical, Chat
+from telegram.bot import Bot
 from sqlalchemy import and_
 
+from scraper.database import init_db, db_session
+from scraper.models import Lecture, Practical, Chat, Misc
 from scraper.items import Lectures, Practicals
 
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
+from misbot.mis_utils import until_x, crop_image
+
+bot = Bot(environ['TOKEN'])
+
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 class LecturePipeline(object):
     def process_item(self, item, spider):
@@ -50,3 +58,60 @@ class PracticalPipeline(object):
                     'conducted':item['conducted']})
             db_session.commit()
         return item
+
+class AttendanceScreenshotPipeline(object):
+    def close_spider(self, spider):
+        student_misc = Misc.query.filter(Misc.chatID == spider.chatID).first()
+        try:
+            bot.send_photo(chat_id=spider.chatID, photo=open("files/{}_attendance.png".format(spider.username), 'rb'),
+                       caption='Attendance Report for {}'.format(spider.username))
+            if student_misc is not None and student_misc.attendance_target is not None:
+                target = student_misc.attendance_target
+                no_of_lectures = int(until_x(spider.chatID, target))
+                if no_of_lectures > 0:
+                    messageContent = "You need to attend {} lectures to meet your target of {}%".format(no_of_lectures, target)
+                    bot.sendMessage(chat_id=spider.chatID, text=messageContent)
+
+            remove('files/{}_attendance.png'.format(spider.username)) #Delete saved image
+        except IOError:
+            bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
+            logger.warning("Attendance screenshot failed! Check if site is blocking us or if Splash is up.")
+
+class ItineraryScreenshotPipeline(object):
+    def close_spider(self, spider):
+        try:
+            with open("files/{}_itinerary.png".format(spider.username), "rb") as f:
+                pass
+        except IOError:
+            bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
+            logger.warning("Itinerary screenshot failed! Check if site is blocking us or if Splash is up.")
+            return
+
+        if spider.uncropped:
+            #arguments supplied, sending full screenshot
+            bot.send_document(chat_id=spider.chatID, document=open("files/{}_itinerary.png".format(spider.username), 'rb'),
+                            caption='Full Itinerary Report for {}'.format(spider.username))
+            remove('files/{}_itinerary.png'.format(spider.username)) #Delete original downloaded image
+            return
+
+        if crop_image("files/{}_itinerary.png".format(spider.username)):
+            #greater than 800px. cropping and sending..
+            bot.send_photo(chat_id=spider.chatID, photo=open("files/{}_itinerary_cropped.png".format(spider.username), 'rb'),
+                        caption='Itinerary Report for {}'.format(spider.username))
+            remove('files/{}_itinerary_cropped.png'.format(spider.username)) #Delete cropped image
+            remove('files/{}_itinerary.png'.format(spider.username)) #Delete original downloaded image
+        else:
+            #less than 800px, sending as it is..
+            bot.send_photo(chat_id=spider.chatID, photo=open("files/{}_itinerary.png".format(spider.username), 'rb'),
+                        caption='Itinerary Report for {}'.format(spider.username))
+            remove('files/{}_itinerary.png'.format(spider.username)) #Delete original downloaded image
+
+class ResultsScreenshotPipeline(object):
+    def close_spider(self, spider):
+        try:
+            bot.send_photo(chat_id=spider.chatID, photo=open("files/{}_tests.png".format(spider.username), 'rb'),
+                        caption='Test Report for {}'.format(spider.username))
+            remove('files/{}_tests.png'.format(spider.username)) #Delete saved image
+        except IOError:
+            bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
+            logger.warning("Results screenshot failed! Check if site is blocking us or if Splash is up.")

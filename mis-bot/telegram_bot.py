@@ -32,16 +32,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-@signed_up
-def fetch_results(bot, update, job_queue):
-    updater.job_queue.run_once(results, 0, context=update)
-
-
-@signed_up
-def fetch_attendance(bot, update, job_queue):
-    updater.job_queue.run_once(attendance, 0, context=update)
-
-
 def main():
     """Start the bot and use webhook to detect and respond to new messages."""
     init_db()
@@ -112,8 +102,8 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)]
     )
 
-    attendance_handler = CommandHandler('attendance', fetch_attendance, pass_job_queue=True)
-    results_handler = CommandHandler('results', fetch_results, pass_job_queue=True)
+    attendance_handler = CommandHandler('attendance', attendance)
+    results_handler = CommandHandler('results', results)
     itinerary_handler = CommandHandler('itinerary', itinerary, pass_args=True)
     eighty_handler = CommandHandler('until80', until_eighty)
     until_handler = CommandHandler('until', until, pass_args=True)

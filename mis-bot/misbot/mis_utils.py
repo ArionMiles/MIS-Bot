@@ -1,9 +1,11 @@
 from __future__ import division
+
 from PIL import Image
 from sympy.solvers import solve
 from sympy import Symbol, Eq, solveset
 import requests
 from sqlalchemy import and_
+
 from scraper.database import init_db, db_session
 from scraper.models import Chat, Lecture, Practical
 from scraper.captcha import captcha_solver

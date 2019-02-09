@@ -5,11 +5,11 @@ import textwrap
 from telegram.ext import ConversationHandler
 from sqlalchemy import and_
 
-from decorators import signed_up
-from states import CREDENTIALS, PARENT_LGN
 from scraper.models import Chat
 from scraper.database import init_db, db_session
-from mis_utils import check_login, check_parent_login
+from misbot.mis_utils import check_login, check_parent_login
+from misbot.decorators import signed_up
+from misbot.states import CREDENTIALS, PARENT_LGN
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',

@@ -3,12 +3,11 @@ import textwrap
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler
 
-from decorators import signed_up
-from states import CHOOSING, INPUT, CALCULATING
 from scraper.models import Lecture, Practical
 from scraper.database import init_db, db_session
-from mis_utils import bunk_lecture
-
+from misbot.mis_utils import bunk_lecture
+from misbot.decorators import signed_up
+from misbot.states import CHOOSING, INPUT, CALCULATING
 
 @signed_up
 def bunk(bot, update):

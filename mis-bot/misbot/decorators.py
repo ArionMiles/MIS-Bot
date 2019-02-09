@@ -1,6 +1,7 @@
 import os
 from functools import wraps
 import logging
+
 from scraper.models import Chat
 
 # Enable logging

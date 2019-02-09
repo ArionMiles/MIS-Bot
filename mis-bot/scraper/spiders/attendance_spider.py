@@ -17,10 +17,10 @@ class AttendanceSpider(InitSpider):
     login_page = 'http://report.aldel.org/student_page.php'
     start_urls = ['http://report.aldel.org/student/attendance_report.php']
 
-    def __init__(self, USERNAME, PASSWORD, chatID, *args, **kwargs):
+    def __init__(self, username, password, chatID, *args, **kwargs):
        super(AttendanceSpider, self).__init__(*args, **kwargs)
-       self.USERNAME = USERNAME
-       self.PASSWORD = PASSWORD
+       self.username = username
+       self.password = password
        self.chatID = chatID
     
     def init_request(self):
@@ -33,13 +33,13 @@ class AttendanceSpider(InitSpider):
         captcha_answer = captcha_solver(sessionID)
         self.logger.info("Captcha Answer: %s" % (captcha_answer))
         return FormRequest.from_response(response,
-                    formdata={'studentid': self.USERNAME, 'studentpwd': self.PASSWORD, 'captcha_code':captcha_answer},
+                    formdata={'studentid': self.username, 'studentpwd': self.password, 'captcha_code':captcha_answer},
                     callback=self.check_login_response)
 
     def check_login_response(self, response):
         """Check the response returned by a login request to see if we are
         successfully logged in."""
-        if self.USERNAME in response.body.decode():
+        if self.username in response.body.decode():
             self.logger.info("Login Successful!")
             # Now the crawling can begin..
             return self.initialized()
@@ -55,16 +55,16 @@ class AttendanceSpider(InitSpider):
             'wait':0.1,
             'render_all':1
         }
-        self.logger.info("Taking snapshot of Attendance Report for {}...".format(self.USERNAME))
+        self.logger.info("Taking snapshot of Attendance Report for {}...".format(self.username))
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
     def parse_result(self, response):
         '''Store the screenshot'''
         imgdata = base64.b64decode(response.data['png'])
-        filename = 'files/{}_attendance.png'.format(self.USERNAME)
+        filename = 'files/{}_attendance.png'.format(self.username)
         with open(filename, 'wb') as f:
             f.write(imgdata)
-            self.logger.info("Saved attendance report as: {}_attendance.png".format(self.USERNAME))
+            self.logger.info("Saved attendance report as: {}_attendance.png".format(self.username))
         
         """CODE FOR SCRAPING EVERY ELEMENT FROM THE TABLE"""
         lecturesItems = response.xpath('//table[1]/tbody/tr')
@@ -85,13 +85,14 @@ class AttendanceSpider(InitSpider):
             prac_item['attended'] = "".join([x.strip('\n').strip(' ') for x in item.xpath('.//td[3]//text()').extract()])
             yield prac_item
 
-def scrape_attendance(USERNAME, PASSWORD, chatID):
+def scrape_attendance(username, password, chatID):
     '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''
     def f(q):
         try:
             runner = crawler.CrawlerRunner({
                 'ITEM_PIPELINES': {'scraper.pipelines.LecturePipeline': 300,
-                                    'scraper.pipelines.PracticalPipeline': 400,},
+                                   'scraper.pipelines.PracticalPipeline': 400,
+                                   'scraper.pipelines.AttendanceScreenshotPipeline':500,},
 
                 'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
                                            'scrapy_splash.SplashMiddleware': 725,
@@ -101,7 +102,7 @@ def scrape_attendance(USERNAME, PASSWORD, chatID):
                 'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
                 'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
             })
-            deferred = runner.crawl(AttendanceSpider, USERNAME=USERNAME, PASSWORD=PASSWORD, chatID=chatID)
+            deferred = runner.crawl(AttendanceSpider, username=username, password=password, chatID=chatID)
             deferred.addBoth(lambda _: reactor.stop())
             reactor.run()
             q.put(None)

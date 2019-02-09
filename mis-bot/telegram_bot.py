@@ -6,17 +6,17 @@ import random
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
-from admin import push_notification, notification_message, notification_confirm, revert_notification, \
+from misbot.admin import push_notification, notification_message, notification_confirm, revert_notification, \
 ask_uuid, confirm_revert
-from attendance_target import attendance_target, select_yn, input_target, edit_attendance_target, update_target
-from bunk import bunk, bunk_choose, bunk_input, bunk_calc
-from decorators import signed_up, admin
-from general import start, register, credentials, parent_login, delete, cancel, unknown, help_text, tips
-from mis_utils import bunk_lecture, until_x, check_login, check_parent_login, crop_image
-from push_notifications import push_message_threaded, get_user_list, delete_threaded
-from spider_functions import attendance, results, itinerary
-from states import *
-from until_func import until, until_eighty
+from misbot.attendance_target import attendance_target, select_yn, input_target, edit_attendance_target, update_target
+from misbot.bunk import bunk, bunk_choose, bunk_input, bunk_calc
+from misbot.decorators import signed_up, admin
+from misbot.general import start, register, credentials, parent_login, delete, cancel, unknown, help_text, tips
+from misbot.mis_utils import bunk_lecture, until_x, check_login, check_parent_login, crop_image
+from misbot.push_notifications import push_message_threaded, get_user_list, delete_threaded
+from misbot.spider_functions import attendance, results, itinerary
+from misbot.states import *
+from misbot.until_func import until, until_eighty
 
 from scraper.database import init_db, db_session
 from scraper.models import Chat, Lecture, Practical, Misc, PushNotification, PushMessage

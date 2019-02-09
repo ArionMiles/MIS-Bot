@@ -4,9 +4,9 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler
 from sqlalchemy import and_
 
-from decorators import admin
-from push_notifications import push_message_threaded, delete_threaded, get_user_list
-from states import NOTIF_MESSAGE, NOTIF_CONFIRM, ASK_UUID, CONFIRM_REVERT
+from misbot.decorators import admin
+from misbot.push_notifications import push_message_threaded, delete_threaded, get_user_list
+from misbot.states import NOTIF_MESSAGE, NOTIF_CONFIRM, ASK_UUID, CONFIRM_REVERT
 from scraper.models import PushMessage, PushNotification
 from scraper.database import init_db, db_session
 

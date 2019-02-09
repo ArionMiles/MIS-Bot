@@ -1,7 +1,7 @@
 import textwrap
 
-from decorators import signed_up
-from mis_utils import until_x
+from misbot.decorators import signed_up
+from misbot.mis_utils import until_x
 
 @signed_up
 def until_eighty(bot, update):

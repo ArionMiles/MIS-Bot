@@ -15,10 +15,11 @@ class ResultsSpider(InitSpider):
     login_page = 'http://report.aldel.org/student_page.php'
     start_urls = ['http://report.aldel.org/student/test_marks_report.php']
 
-    def __init__(self, USERNAME, PASSWORD, *args, **kwargs):
+    def __init__(self, username, password, chatID, *args, **kwargs):
         super(ResultsSpider, self).__init__(*args, **kwargs)
-        self.USERNAME = USERNAME
-        self.PASSWORD = PASSWORD
+        self.username = username
+        self.password = password
+        self.chatID = chatID
 
     def init_request(self):
         """This function is called before crawling starts."""
@@ -30,13 +31,13 @@ class ResultsSpider(InitSpider):
         captcha_answer = captcha_solver(sessionID)
         self.logger.info("Captcha Answer: %s" % (captcha_answer))
         return FormRequest.from_response(response,
-                    formdata={'studentid': self.USERNAME, 'studentpwd': self.PASSWORD, 'captcha_code':captcha_answer},
+                    formdata={'studentid': self.username, 'studentpwd': self.password, 'captcha_code':captcha_answer},
                     callback=self.check_login_response)
 
     def check_login_response(self, response):
         """Check the response returned by a login request to see if we are
         successfully logged in."""
-        if self.USERNAME in response.body.decode():
+        if self.username in response.body.decode():
             self.logger.info("Login Successful!")
             # Now the crawling can begin..
             return self.initialized()
@@ -52,31 +53,33 @@ class ResultsSpider(InitSpider):
             'wait':0.1,
             'render_all':1
         }
-        self.logger.info("Taking snapshot of Test Report for %s..." %(self.USERNAME))
+        self.logger.info("Taking snapshot of Test Report for %s..." %(self.username))
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
     def parse_result(self, response):
         '''Store the screenshot'''
         imgdata = base64.b64decode(response.data['png'])
-        filename = 'files/{}_tests.png'.format(self.USERNAME)
+        filename = 'files/{}_tests.png'.format(self.username)
         with open(filename, 'wb') as f:
             f.write(imgdata)
-            self.logger.info("Saved test report as: {}_tests.png".format(self.USERNAME))
+            self.logger.info("Saved test report as: {}_tests.png".format(self.username))
 
-def scrape_results(USERNAME, PASSWORD):
+def scrape_results(username, password, chatID):
     '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''
     def f(q):
         try:
             runner = crawler.CrawlerRunner({
-        'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
-                                   'scrapy_splash.SplashMiddleware': 725,
-                                   'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
+                'ITEM_PIPELINES': {'scraper.pipelines.ResultsScreenshotPipeline':300,},
 
-        'SPLASH_URL':environ['SPLASH_INSTANCE'],
-        'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
-        'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
-        })
-            deferred = runner.crawl(ResultsSpider, USERNAME=USERNAME, PASSWORD=PASSWORD)
+                'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
+                                           'scrapy_splash.SplashMiddleware': 725,
+                                           'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
+
+                'SPLASH_URL':environ['SPLASH_INSTANCE'],
+                'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
+                'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
+            })
+            deferred = runner.crawl(ResultsSpider, username=username, password=password, chatID=chatID)
             deferred.addBoth(lambda _: reactor.stop())
             reactor.run()
             q.put(None)

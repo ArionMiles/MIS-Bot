@@ -17,10 +17,12 @@ class ItinerarySpider(InitSpider):
     login_page = 'http://report.aldel.org/parent_page.php'
     start_urls = ['http://report.aldel.org/parent/itinenary_attendance_report.php']
 
-    def __init__(self, USERNAME, DOB, *args, **kwargs):
+    def __init__(self, username, dob, chatID, uncropped=False, *args, **kwargs):
         super(ItinerarySpider, self).__init__(*args, **kwargs)
-        self.USERNAME = USERNAME
-        self.DOB = DOB
+        self.username = username
+        self.dob = dob
+        self.chatID = chatID
+        self.uncropped = uncropped
    
     def init_request(self):
         """This function is called before crawling starts."""
@@ -29,14 +31,14 @@ class ItinerarySpider(InitSpider):
     def login(self, response):
         """Generate a login request."""
         try:
-            date, month, year = self.DOB.split('/')
+            date, month, year = self.dob.split('/')
         except ValueError:
-            self.logger.warning("Incorrect DOB details. Terminating operation.")
+            self.logger.warning("Incorrect dob details. Terminating operation.")
 
         sessionID = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
         captcha_answer = captcha_solver(sessionID)
         self.logger.info("Captcha Answer: %s" % (captcha_answer))
-        return FormRequest.from_response(response, formdata={'studentid': self.USERNAME,
+        return FormRequest.from_response(response, formdata={'studentid': self.username,
                                                              'date_of_birth': date,
                                                              'month_of_birth': month,
                                                              'year_of_birth': year,
@@ -46,7 +48,7 @@ class ItinerarySpider(InitSpider):
     def check_login_response(self, response):
         """Check the response returned by a login request to see if we are
         successfully logged in."""
-        if self.USERNAME in response.body.decode():
+        if self.username in response.body.decode():
             self.logger.info("Login Successful!")
             # Now the crawling can begin..
             return self.initialized()
@@ -62,23 +64,25 @@ class ItinerarySpider(InitSpider):
             'wait':0.1,
             'render_all':1
         }
-        self.logger.info("Taking snapshot of Itinerary Attendance Report for {}...".format(self.USERNAME))
+        self.logger.info("Taking snapshot of Itinerary Attendance Report for {}...".format(self.username))
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
     def parse_result(self, response):
         '''Store the screenshot'''
         imgdata = base64.b64decode(response.data['png'])
-        filename = 'files/{}_itinerary.png'.format(self.USERNAME)
+        filename = 'files/{}_itinerary.png'.format(self.username)
         with open(filename, 'wb') as f:
             f.write(imgdata)
-            self.logger.info("Saved itinerary attendance report as: {}_itinerary.png".format(self.USERNAME))
+            self.logger.info("Saved itinerary attendance report as: {}_itinerary.png".format(self.username))
 
 
-def scrape_itinerary(USERNAME, DOB):
+def scrape_itinerary(username, dob, chatID, uncropped=False):
     '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''
     def f(q):
         try:
             runner = crawler.CrawlerRunner({
+                'ITEM_PIPELINES': {'scraper.pipelines.ItineraryScreenshotPipeline':300,},
+
                 'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
                                            'scrapy_splash.SplashMiddleware': 725,
                                            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,},
@@ -87,7 +91,7 @@ def scrape_itinerary(USERNAME, DOB):
                 'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
                 'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
             })
-            deferred = runner.crawl(ItinerarySpider, USERNAME=USERNAME, DOB=DOB)
+            deferred = runner.crawl(ItinerarySpider, username=username, dob=dob, chatID=chatID, uncropped=uncropped)
             deferred.addBoth(lambda _: reactor.stop())
             reactor.run()
             q.put(None)

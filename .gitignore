@@ -143,3 +143,9 @@ mis-bot/files/crop\.py
 venvwsl/
 
 chats_migrations/
+
+mis-bot/files/cert\.pem
+
+mis-bot/files/private\.key
+
+mis-bot/\.env

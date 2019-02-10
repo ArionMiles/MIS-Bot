@@ -1,0 +1,20 @@
+version: '3'
+services:
+  splash:
+    image: "scrapinghub/splash:latest"
+    ports:
+      - "8050:8050"
+
+  misbot:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: misbot.v4.0
+    ports:
+     - "5000:5000"
+    links:
+      - "splash:splash"
+    depends_on:
+      - splash
+    volumes:
+      - ./mis-bot/:/app

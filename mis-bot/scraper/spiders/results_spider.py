@@ -1,13 +1,14 @@
 from os import environ
 import base64
 from multiprocessing import Process, Queue
+
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
 from scrapy_splash import SplashRequest
 import scrapy.crawler as crawler
 from twisted.internet import reactor
 
-from ..captcha import captcha_solver
+from misbot.mis_utils import solve_captcha
 
 class ResultsSpider(InitSpider):
     name = 'results'
@@ -27,8 +28,8 @@ class ResultsSpider(InitSpider):
 
     def login(self, response):
         """Generate a login request."""
-        sessionID = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
-        captcha_answer = captcha_solver(sessionID)
+        session_id = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
+        captcha_answer = solve_captcha(session_id)
         self.logger.info("Captcha Answer: %s" % (captcha_answer))
         return FormRequest.from_response(response,
                     formdata={'studentid': self.username, 'studentpwd': self.password, 'captcha_code':captcha_answer},

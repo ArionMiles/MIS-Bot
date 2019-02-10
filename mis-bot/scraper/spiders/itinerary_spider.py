@@ -9,7 +9,7 @@ from multiprocessing import Process, Queue
 from scrapy_splash import SplashRequest
 
 from ..items import Lectures, Practicals
-from ..captcha import captcha_solver
+from misbot.mis_utils import solve_captcha
 
 class ItinerarySpider(InitSpider):
     name = 'itinerary'
@@ -35,8 +35,8 @@ class ItinerarySpider(InitSpider):
         except ValueError:
             self.logger.warning("Incorrect dob details. Terminating operation.")
 
-        sessionID = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
-        captcha_answer = captcha_solver(sessionID)
+        session_id = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
+        captcha_answer = solve_captcha(session_id)
         self.logger.info("Captcha Answer: %s" % (captcha_answer))
         return FormRequest.from_response(response, formdata={'studentid': self.username,
                                                              'date_of_birth': date,

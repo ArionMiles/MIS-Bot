@@ -9,7 +9,7 @@ from multiprocessing import Process, Queue
 from scrapy_splash import SplashRequest
 
 from ..items import Lectures, Practicals
-from ..captcha import captcha_solver
+from misbot.mis_utils import solve_captcha
 
 class AttendanceSpider(InitSpider):
     name = 'attendance'
@@ -29,8 +29,8 @@ class AttendanceSpider(InitSpider):
 
     def login(self, response):
         """Generate a login request."""
-        sessionID = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
-        captcha_answer = captcha_solver(sessionID)
+        session_id = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
+        captcha_answer = solve_captcha(session_id)
         self.logger.info("Captcha Answer: %s" % (captcha_answer))
         return FormRequest.from_response(response,
                     formdata={'studentid': self.username, 'studentpwd': self.password, 'captcha_code':captcha_answer},

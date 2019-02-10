@@ -6,3 +6,4 @@ sympy==1.1.1
 requests==2.20.0
 Pillow==5.0.0
 python-dotenv==0.10.1
+https://github.com/ArionMiles/securimage_solver/archive/pip_package.zip

@@ -1,14 +1,18 @@
 from __future__ import division
+import shutil
 
 from PIL import Image
 from sympy.solvers import solve
 from sympy import Symbol, Eq, solveset
 import requests
 from sqlalchemy import and_
+from securimage_solver import CaptchaApi
 
 from scraper.database import init_db, db_session
 from scraper.models import Chat, Lecture, Practical
 from scraper.captcha import captcha_solver
+
+SECURIMAGE_ENDPOINT = "http://report.aldel.org/securimage/securimage_show.php"
 
 def bunk_lecture(n, tot_lec, chatID, stype, index):
     """Calculates % drop/rise if one chooses to bunk certain lectures. 
@@ -155,3 +159,27 @@ def get_user_info(chat_id):
     return {'PID': Student_ID,
             'password': password,
             'DOB': DOB}
+
+
+def solve_captcha(session_id):
+    """Solve captcha using securimage_solver library.
+    Downloads the image from the securimage_endpoint and
+    feeds it to securimage_solver lib.
+    
+    :param session_id: Session cookie
+    :type session_id: str
+    :return: Captcha answer
+    :rtype: str
+    """
+
+    cookie = {'PHPSESSID': session_id}
+    response = requests.get(SECURIMAGE_ENDPOINT, cookies=cookie, stream=True)
+    path = "files/captcha/{}.png".format(session_id)
+    if response.status_code == 200:
+        with open(path, 'wb') as f:
+            response.raw.decode_content = True
+            shutil.copyfileobj(response.raw, f)   
+
+        c = CaptchaApi()
+        captcha_answer = c.predict(path)
+        return captcha_answer

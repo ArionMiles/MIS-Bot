@@ -10,7 +10,6 @@ from securimage_solver import CaptchaApi
 
 from scraper.database import init_db, db_session
 from scraper.models import Chat, Lecture, Practical
-from scraper.captcha import captcha_solver
 
 SECURIMAGE_ENDPOINT = "http://report.aldel.org/securimage/securimage_show.php"
 
@@ -79,8 +78,8 @@ def check_login(username, password):
     base_url = 'http://report.aldel.org/student_page.php'
     with requests.session() as s:
         r = s.get(base_url)
-        sessionID = str(r.cookies.get('PHPSESSID')) #Get SessionID
-        captcha_answer = captcha_solver(sessionID) #Solve the CAPTCHA
+        session_id = str(r.cookies.get('PHPSESSID')) #Get SessionID
+        captcha_answer = solve_captcha(session_id) #Solve the CAPTCHA
         payload = {
             'studentid':username,
             'studentpwd':password,
@@ -112,8 +111,8 @@ def check_parent_login(username, dob):
 
     with requests.session() as s:
         r = s.get(base_url)
-        sessionID = str(r.cookies.get('PHPSESSID')) #Get SessionID
-        captcha_answer = captcha_solver(sessionID) #Solve the CAPTCHA
+        session_id = str(r.cookies.get('PHPSESSID')) #Get SessionID
+        captcha_answer = solve_captcha(session_id) #Solve the CAPTCHA
         payload = {
             'studentid':username,
             'date_of_birth': date,

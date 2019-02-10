@@ -3,7 +3,7 @@ import os
 
 from sqlalchemy import and_
 
-from scraper.spiders.moodle_spider import scrape_attendance
+from scraper.spiders.attendance_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 from scraper.spiders.itinerary_spider import scrape_itinerary
 from scraper.database import init_db, db_session

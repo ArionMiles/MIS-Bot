@@ -7,6 +7,9 @@
 I created this bot as a means to avoid Defaulter's List, and I hope this bot can help others avoid it, too. The bot is hosted on Digital Ocean. 
 
 ## Features
+  * **CAPTCHA Bypass**
+  
+    The bot can automatically answer the captcha code for logging in. Uses [securimage_solver](https://github.com/sampritipanda/securimage_solver) library.
   * **Bunk Calculator**
   
     Calculate rise/drop in your overall percentage.
@@ -48,9 +51,7 @@ I created this bot as a means to avoid Defaulter's List, and I hope this bot can
 
     Fetch results of Class Tests. Uses scrapy-splash library.
 
-  * **CAPTCHA Bypass**
   
-    The bot can automatically answer the captcha code for logging in. Uses [securimage_solver](https://github.com/sampritipanda/securimage_solver) library.
 
 ## Installation
 [Read the wiki](https://github.com/ArionMiles/MIS-Bot/wiki) on getting this bot up and running for yourself.

@@ -133,7 +133,7 @@ def main():
         updater.start_polling(clean=True)
         updater.idle()
     else:
-        webhook_url = 'https://%s:8443/%s'%(os.environ['URL'], TOKEN)
+        webhook_url = 'https://{0}:8443/{1}'.format(os.environ['URL'], TOKEN)
         updater.start_webhook(listen='0.0.0.0',
                             port=8443,
                             url_path=TOKEN,

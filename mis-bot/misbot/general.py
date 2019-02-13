@@ -151,7 +151,7 @@ def parent_login(bot, update, user_data):
 
     db_session.query(Chat).filter(Chat.chatID == chatID).update({'DOB': DOB})
     db_session.commit()
-    logger.info("New Registration! Username: %s" % (Student_ID))
+    logger.info("New Registration! Username: {}".format((Student_ID)))
 
     messageContent = "Welcome {}!\nStart by checking your /attendance or /itinerary".format(new_user)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
@@ -166,11 +166,11 @@ def delete(bot, update):
     chatID = update.message.chat_id
     user_details = db_session.query(Chat).filter(Chat.chatID == chatID).first() #Pull user's username from the DB
     username = user_details.PID
-    logger.info("Deleting user credentials for %s!" % (username))
+    logger.info("Deleting user credentials for {}!".format(username))
     Chat.query.filter(Chat.chatID == chatID).delete() #Delete the user's record referenced by their ChatID
     db_session.commit() #Save changes
-    bot.sendMessage(chat_id=update.message.chat_id, text="Your credentials have been deleted, %s\nHope to see you back soon." \
-        % (username[3:-4].title()))
+    messageContent = "Your credentials have been deleted, {}\nHope to see you back soon.".format(username[3:-4].title())
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 
 def cancel(bot, update):

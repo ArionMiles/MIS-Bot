@@ -31,7 +31,7 @@ class AttendanceSpider(InitSpider):
         """Generate a login request."""
         session_id = str(response.headers.getlist('Set-Cookie')[0].decode().split(';')[0].split("=")[1])
         captcha_answer = solve_captcha(session_id)
-        self.logger.info("Captcha Answer: %s" % (captcha_answer))
+        self.logger.info("Captcha Answer: {}".format(captcha_answer))
         return FormRequest.from_response(response,
                     formdata={'studentid': self.username, 'studentpwd': self.password, 'captcha_code':captcha_answer},
                     callback=self.check_login_response)

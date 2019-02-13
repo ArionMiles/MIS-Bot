@@ -10,6 +10,7 @@ from telegram.utils.request import Request
 
 from scraper.database import init_db, db_session
 from scraper.models import Chat, PushNotification,PushMessage
+from misbot.mis_utils import get_user_info
 
 API_KEY_TOKEN = os.environ["TOKEN"]
 list_of_objs = []
@@ -51,6 +52,8 @@ def push_message_threaded(message, user_list):
     return elapsed, message_uuid
  
 def push_t(bot, message, message_uuid, chat_id):
+    username = get_user_info(chat_id)['PID'][3:-4].title()
+    message = "Hey {0}!\n{1}".format(username, message)
     try:
         response = bot.sendMessage(chat_id=chat_id, text=message, parse_mode='markdown')
         push_message_record = PushNotification(message_uuid=message_uuid, chatID=chat_id, message_id=response.message_id, sent=True)
@@ -69,11 +72,3 @@ def delete_threaded(message_id_list, user_list):
 
 def delete(bot, message_id, chat_id):
     bot.delete_message(chat_id, message_id)
-
-if __name__ == '__main__':
-    message = input("Enter message: ")
-    print("No. of recepients: {}".format(len(get_user_list())))
-    
-    elapsed, message_uuid = push_message_threaded(message, get_user_list())
-    
-    print("Time taken for threaded func: {:.2f}s\n {}".format(elapsed, message_uuid))

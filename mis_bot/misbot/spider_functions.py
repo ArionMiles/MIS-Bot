@@ -20,17 +20,17 @@ logger = logging.getLogger(__name__)
 @signed_up
 def attendance(bot, update):
     """Core function. Fetch attendance figures from Aldel's MIS.
-    Runs AttendanceSpider for registered users and passes it their Student_ID(PID),
-    Password, & ChatID (necessary for AttendancePipeline)
+    Runs AttendanceSpider for registered users and passes it their ``Student_ID`` (PID),
+    ``Password``, & ``ChatID`` (necessary for ``AttendancePipeline``)
 
-    AttendanceSpider creates a image file of the format: <Student_ID>_attendance.png
+    ``AttendanceSpider`` creates a image file of the format: ``<Student_ID>_attendance.png``
     File is deleted after being sent to the user.
     If the file is unavailable, error message is sent to the user.
     
     :param bot: Telegram Bot object
     :type bot: telegram.bot.Bot
-    :param job: Telegram Job object
-    :type job: telegram.ext.Job
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
     """
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
@@ -45,20 +45,19 @@ def attendance(bot, update):
 
 @signed_up
 def results(bot, update):
-    """
-    Fetch Unit Test results from the Aldel MIS.
+    """Fetch Unit Test results from the Aldel MIS.
     Core function. Fetch Test Reports from Aldel's MIS.
-    Runs ResultsSpider for registered users and passes it their Student_ID(PID) &
-    Password.
+    Runs ``ResultsSpider`` for registered users and passes it their ``Student_ID`` (PID) &
+    ``Password``.
 
-    ResultsSpider creates a image file of the format: <Student_ID>_tests.png
+    ResultsSpider creates a image file of the format: ``<Student_ID>_tests.png``
     File is deleted after being sent to the user.
     If the file is unavailable, error message is sent to the user.
     
     :param bot: Telegram Bot object
     :type bot: telegram.bot.Bot
-    :param job: Telegram Job object
-    :type job: telegram.ext.Job
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
     """
     # Get chatID and user details based on chatID
     chatID = update.message.chat_id
@@ -73,18 +72,24 @@ def results(bot, update):
 
 @signed_up
 def itinerary(bot, update, args):
-    """
-    Core function. Fetch detailed attendance reports from Aldel's MIS (Parent's Portal).
-    Runs ItinerarySpider for registered users and passes it their Student_ID(PID) &
-    Password.
+    """Core function. Fetch detailed attendance reports from Aldel's MIS (Parent's Portal).
+    Runs ``ItinerarySpider`` for registered users and passes it their ``Student_ID`` (PID) &
+    ``Password``.
 
-    AttendanceSpider creates a image file of the format: <Student_ID>_itinerary.png
-    If args are present, full report is sent in the form of a document. Otherwise, it
-    is cropped to the past 7 days using crop_image() and this function stores the
-    resultant image as: <Student_ID>_itinerary_cropped.png and returns True.
+    ``AttendanceSpider`` creates a image file of the format: ``<Student_ID>_itinerary.png``
+    If ``args`` are present, full report is sent in the form of a document. Otherwise, it
+    is cropped to the past 7 days using :py:func:`misbot.mis_utils.crop_image` and this function stores the
+    resultant image as: ``<Student_ID>_itinerary_cropped.png`` and returns True.
 
     File is deleted after sent to the user.
     If the file is unavailable, error message is sent to the user.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param args: User supplied arguments
+    :type args: tuple
     """
     chatID = update.message.chat_id
 

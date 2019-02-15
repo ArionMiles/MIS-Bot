@@ -18,9 +18,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 def start(bot, update):
-    """
-    Initial message sent to all users.
-    Starts registration conversation, passes control to credentials()
+    """Initial message sent to all users.
+    Starts registration conversation, passes control to :py:func:`credentials`
     """
     intro_message = textwrap.dedent("""
     Hi! I'm a Telegram Bot for Aldel MIS.
@@ -39,16 +38,15 @@ def start(bot, update):
 
 
 def register(bot, update, user_data):
-    """
-    Let all users register with their credentials.
-    Similar to start() but this function can be invoked by /register command.
+    """Let all users register with their credentials.
+    Similar to :py:func:`start` but this function can be invoked by ``/register`` command.
 
-    If user's chatID & DOB are already present in database then ends the conversation.
-    Otherwise, if only chatID is present, then stores PID(StudentID) in user_data dict &
-    gives control to parent_login() function.
+    If user's ``chatID`` & ``DOB`` are already present in database then ends the conversation.
+    Otherwise, if only ``chatID`` is present, then stores ``StudentID`` (PID) in ``user_data`` dict &
+    gives control to :py:func:`parent_login` function.
 
     If both conditions are false, then asks user to input Student details (PID & Password)
-    and gives control to credentials()
+    and gives control to :py:func:`credentials`
     """
     init_db()
     if Chat.query.filter(Chat.chatID == update.message.chat_id).first():
@@ -81,10 +79,10 @@ def register(bot, update, user_data):
 def credentials(bot, update, user_data):
     """
     Store user credentials in a database.
-    Takes student info (PID & password) from update.message.text and splits it into Student_ID &
-    Password and checks if they are correct with check_login() and stores them in the Chat table.
+    Takes student info (PID & password) from ``update.message.text`` and splits it into Student_ID &
+    Password and checks if they are correct with :py:func:`misbot.mis_utils.check_login` and stores them in the ``Chat`` table.
     Finally, sends message asking users to enter DOB and gives control to :func:`parent_login` after
-    storing Student_ID(PID) in user_data dict.
+    storing ``Student_ID`` (PID) in user_data dict.
     """
     chatID = update.message.chat_id
     #If message contains less or more than 2 arguments, send message and stop.
@@ -129,11 +127,11 @@ def credentials(bot, update, user_data):
 
 def parent_login(bot, update, user_data):
     """
-    user_data dict contains Student_ID key from credentials().
-    Extracts DOB from update.message.text and checks validity using check_parent_login()
+    user_data dict contains ``Student_ID`` key from :py:func:`credentials`.
+    Extracts DOB from ``update.message.text`` and checks validity using :py:func:`misbot.mis_utils.check_parent_login`
     before adding it to database.
-    Finally, sends a message to the user requesting them to start using /attendance or
-    /itinerary commands.
+    Finally, sends a message to the user requesting them to start using ``/attendance`` or
+    ``/itinerary`` commands.
     """
     DOB = update.message.text
     Student_ID = user_data['Student_ID']
@@ -160,9 +158,7 @@ def parent_login(bot, update, user_data):
 
 @signed_up
 def delete(bot, update):
-    """
-    Delete a user's credentials if they wish to stop using the bot or update them.
-    """
+    """Delete a user's credentials if they wish to stop using the bot or update them."""
     chatID = update.message.chat_id
     user_details = db_session.query(Chat).filter(Chat.chatID == chatID).first() #Pull user's username from the DB
     username = user_details.PID
@@ -174,17 +170,13 @@ def delete(bot, update):
 
 
 def cancel(bot, update):
-    """
-    Cancel registration operation (terminates conv_handler)
-    """
+    """Cancel registration operation (terminates conv_handler)"""
     bot.sendMessage(chat_id=update.message.chat_id, text="As you wish, the operation has been cancelled! 😊")
     return ConversationHandler.END
 
 
 def unknown(bot, update):
-    """
-    Respond to incomprehensible messages/commands with some canned responses.
-    """
+    """Respond to incomprehensible messages/commands with some canned responses."""
     can = ["Seems like I'm not programmed to understand this yet.", "I'm not a fully functional A.I. ya know?",
     "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "Damn you're dumb.", "42",
     "We cannot afford machine learning to make this bot smart!", "We don't use NLP.", "I really wish we had a neural network."]
@@ -194,9 +186,7 @@ def unknown(bot, update):
 
 
 def help_text(bot, update):
-    """
-    Display help text.
-    """
+    """Display help text."""
     helpText = textwrap.dedent("""
     1. /register - Register yourself
     2. /attendance - Fetch attendance from the MIS website.
@@ -212,9 +202,7 @@ def help_text(bot, update):
 
 
 def tips(bot, update):
-    """
-    Send a random tip about the bot.
-    """
+    """Send a random tip about the bot."""
     tips = ["Always use /attendance command before using /until80 or /bunk to get latest figures.",\
     "The Aldel MIS gets updated at 6PM everyday.", "The /until80 function gives you the number of lectures you must attend *consecutively* before you attendance is 80%.",\
     "The bunk calculator's figures are subject to differ from actual values depending upon a number of factors such as:\

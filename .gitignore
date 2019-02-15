@@ -149,3 +149,13 @@ mis-bot/files/cert\.pem
 mis-bot/files/private\.key
 
 mis-bot/\.env
+
+mis_bot/\.env
+
+mis_bot/files/cert\.pem
+
+mis_bot/files/private\.key
+
+mis_bot/push_alerts\.py
+
+mis_bot/scraper/captcha\.py

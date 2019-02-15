@@ -98,7 +98,7 @@ def check_parent_login(username, dob):
     :param username: student's PID (format: XXXNameXXXX)
                      where   X - integers
     :type username: str
-    :param dob: Student's Date of Birth
+    :param dob: User's Date of Birth
     :type dob: str
     :return: True for correct credentials, false otherwise.
     :rtype: bool
@@ -127,7 +127,7 @@ def check_parent_login(username, dob):
 
 
 def crop_image(path):
-    """Crop image depending upon it's size.
+    """Crop image if the image height is > 800px.
     
     :param path: image file path
     :type path: str
@@ -146,7 +146,7 @@ def crop_image(path):
 def get_user_info(chat_id):
     """Give user data.
     
-    :param chat_id: user's unique 9-digit ChatID from telegram
+    :param chat_id: 9-Digit unique user ID
     :type chat_id: str
     :return: Dictionary of all user data
     :rtype: dict
@@ -161,7 +161,7 @@ def get_user_info(chat_id):
 
 
 def solve_captcha(session_id):
-    """Solve captcha using securimage_solver library.
+    """Solve captcha using ``securimage_solver`` library.
     Downloads the image from the securimage_endpoint and
     feeds it to securimage_solver lib.
     

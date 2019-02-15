@@ -13,7 +13,8 @@ from scraper.database import init_db, db_session
 
 @admin
 def push_notification(bot, update):
-    """Starts Push notification conversation. Asks for message.
+    """Starts Push notification conversation. Asks for message and
+    transfers control to :py:func:`notification_message` 
     
     :param bot: Telegram Bot object
     :type bot: telegram.bot.Bot
@@ -28,7 +29,7 @@ def push_notification(bot, update):
 
 
 def notification_message(bot, update, user_data):
-    """Ask for confirmation, stores the message in `user_data`,
+    """Ask for confirmation, stores the message in ``user_data`` dictionary,
     transfer control to :py:func:`notification_confirm`
     
     :param bot: Telegram Bot object
@@ -85,7 +86,7 @@ def notification_confirm(bot, update, user_data):
 @admin
 def revert_notification(bot, update):
     """Delete a previously sent push notification.
-    Ask for UUID of message to delete and pass control to :func:`ask_uuid`
+    Ask for ``uuid`` of message to delete and pass control to :func:`ask_uuid`
     
     :param bot: Telegram Bot object
     :type bot: telegram.bot.Bot
@@ -98,7 +99,7 @@ def revert_notification(bot, update):
 
 
 def ask_uuid(bot, update, user_data):
-    """Store the uuid, send confirmation message
+    """Store the ``uuid``, send confirmation message
     and pass control to :func:`confirm_revert`
     
     :param bot: Telegram Bot object

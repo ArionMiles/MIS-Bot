@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 @signed_up
 def attendance_target(bot, update):
     """Like :func:`until_eighty`, but with user specified target attendance percentage
-    which is stored in the Misc table.
+    which is stored in the ``Misc`` table.
     If target isn't set, asks users whether they'd like to and passes control to 
-    :func:`select_yn`
+    :py:func:`select_yn`
     
     :param bot: Telegram Bot object
     :type bot: telegram.bot.Bot
@@ -70,7 +70,7 @@ def attendance_target(bot, update):
 
 def select_yn(bot, update):
     """If user replies no, ends the conversation,
-    otherwise transfers control to :func:`input_target`.
+    otherwise transfers control to :py:func:`input_target`.
     
     :param bot: Telegram Bot object
     :type bot: telegram.bot.Bot
@@ -126,7 +126,7 @@ def input_target(bot, update):
 @signed_up
 def edit_attendance_target(bot, update):
     """Edit existing attendance target. Shows current target and transfers
-    control to `update_target`
+    control to :py:func:`update_target`
     
     :param bot: Telegram Bot object
     :type bot: telegram.bot.Bot

@@ -6,7 +6,13 @@ from misbot.mis_utils import until_x
 @signed_up
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%
-    If until80() returns a negative number, attendance is already over 80%
+    
+    If :py:func:`misbot.mis_utils.until_x` returns a negative number, attendance is already over 80%
+
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update    
     """
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     no_of_lectures = int(until_x(update.message.chat_id, 80))
@@ -18,7 +24,7 @@ def until_eighty(bot, update):
 
 @signed_up
 def until(bot, update, args):
-    """Like `until_eighty` but user supplies the number.
+    """Like :py:func:`until_eighty` but user supplies the number.
 
     :param bot: Telegram Bot object
     :type bot: telegram.bot.Bot

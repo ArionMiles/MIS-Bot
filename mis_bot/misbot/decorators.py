@@ -11,6 +11,14 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 def signed_up(func):
+    """Checks if user is signed up or not.
+    If user isn't signed up, sends a message asking them to register.
+    
+    :param func: A telegram bot function
+    :type func: func
+    :return: None if user isn't registered or the function which decorator is applied on.
+    :rtype: None or func
+    """
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
         chatID = update.message.chat_id
@@ -22,6 +30,15 @@ def signed_up(func):
 
 
 def admin(func):
+    """Checks if the user sending the command/message is an admin or not.
+    If user isn't an admin, their username (or chat ID, if unregistered) is logged
+    and a message is sent saying that the incident has been reported.
+    
+    :param func: A telegram bot function
+    :type func: func
+    :return: None if user isn't registered or the function which decorator is applied on.
+    :rtype: None or func
+    """
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
         chatID = update.message.chat_id

@@ -14,7 +14,14 @@ def bunk(bot, update):
     """
     Starting point of bunk_handler.
     Sends a KeyboardMarkup (https://core.telegram.org/bots#keyboards)
-    Passes control to bunk_choose()
+    Passes control to :py:func:`bunk_choose`
+
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :return: CHOOSING
+    :rtype: int
     """
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     keyboard = [['Lectures'], ['Practicals']]
@@ -26,19 +33,27 @@ def bunk(bot, update):
 
 
 def bunk_choose(bot, update, user_data):
-    """
-    Removes keyboardMarkup sent in previous handler.
+    """Removes keyboardMarkup sent in previous handler.
 
-    Stores the response (for Lectures/Practicals message sent in previous handler) in a user_data
-    dictionary with the key "stype".
-    user_data is a user relative dictionary which holds data between different handlers/functions
+    Stores the response (for Lectures/Practicals message sent in previous handler) in a ``user_data``
+    dictionary with the key `"stype"`.
+    ``user_data`` is a user relative dictionary which holds data between different handlers/functions
     in a ConversationHandler.
 
-    Selects the appropriate table (Lecture or Practical) based on stype value.
+    Selects the appropriate table (Lecture or Practical) based on ``stype`` value.
     Checks if records exist in the table for a user and sends a warning message or proceeds
     to list names of all subjects in the table.
 
-    Passes control to bunk_input()
+    Passes control to :py:func:`bunk_input`
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param user_data: User data dictionary
+    :type user_data: dict
+    :return: ConversationHandler.END if no records else INPUT
+    :rtype: int
     """
     user_data['type'] = update.message.text
     stype = user_data['type']
@@ -73,9 +88,17 @@ def bunk_choose(bot, update, user_data):
 
 
 def bunk_input(bot, update, user_data):
-    """
-    Stores index of the chosen subject in user_data['index'] from message.text.
-    Passes control to bunk_calc()
+    """Stores index of the chosen subject in ``user_data['index']`` from ``update.message.text``.
+    Passes control to :py:func:`bunk_calc`
+
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param user_data: User data dictionary
+    :type user_data: dict
+    :return: ConversationHandler.END if message is "/cancel_bunk" else CALCULATING
+    :rtype: int
     """
     user_data['index'] = update.message.text
     if user_data['index'] == "/cancel_bunk":
@@ -98,9 +121,21 @@ def bunk_input(bot, update, user_data):
 
 
 def bunk_calc(bot, update, user_data):
-    """
-    user_data keys: type, index, figures.
+    """Calculate the % drop/rise with the previously given values from the user
+    and send the response to the user.
+    
+    ``user_data`` contains: ``type``, ``index``, ``figures``.
 
+    Incorrect no. of arguments resets the state and user is asked for input again.
+
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    :param user_data: User data dictionary
+    :type user_data: dict
+    :return: None if incorrect values else INPUT
+    :rtype: None or int
     """
     user_data['figures'] = update.message.text
     stype = user_data['type']

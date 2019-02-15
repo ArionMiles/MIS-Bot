@@ -12,6 +12,14 @@ from ..items import Lectures, Practicals
 from misbot.mis_utils import solve_captcha
 
 class AttendanceSpider(InitSpider):
+    """Scrape attendance figures from ``http://report.aldel.org/student/attendance_report.php``
+    and store the figures in database with :py:class:`scraper.pipelines.LecturePipeline`
+    and :py:class:`scraper.pipelines.PracticalPipeline`
+    
+    :param InitSpider: Base Spider with initialization facilities
+    :type InitSpider: Spider
+    """
+
     name = 'attendance'
     allowed_domains = ['report.aldel.org']
     login_page = 'http://report.aldel.org/student_page.php'
@@ -48,6 +56,8 @@ class AttendanceSpider(InitSpider):
             # Something went wrong, we couldn't log in, so nothing happens.
 
     def parse(self, response):
+        """Send a SplashRequest and forward the response to :py:func:`parse_result`"""
+
         url = 'http://report.aldel.org/student/attendance_report.php'
         splash_args = {
             'html': 1,
@@ -59,7 +69,12 @@ class AttendanceSpider(InitSpider):
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
     def parse_result(self, response):
-        '''Store the screenshot'''
+        """Downloads and saves the attendance report in ``files/<Student_ID>_attendance.png``
+        format.
+
+        Also scrapes every attendance record from the webpage and passes it to
+        ``LecturePipeline`` and ``PracticalPipeline``.
+        """
         imgdata = base64.b64decode(response.data['png'])
         filename = 'files/{}_attendance.png'.format(self.username)
         with open(filename, 'wb') as f:
@@ -86,7 +101,16 @@ class AttendanceSpider(InitSpider):
             yield prac_item
 
 def scrape_attendance(username, password, chatID):
-    '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''
+    """Run the spider multiple times, without hitting ``ReactorNotRestartable`` exception. Forks own process.
+    
+    :param username: student's PID (format: XXXNameXXXX)
+                     where   X - integers
+    :type username: str
+    :param password: student's password for student portal
+    :type password: str
+    :param chatID: 9-Digit unique user ID
+    :type chatID: str
+    """
     def f(q):
         try:
             runner = crawler.CrawlerRunner({

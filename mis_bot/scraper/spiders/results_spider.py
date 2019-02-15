@@ -11,6 +11,12 @@ from twisted.internet import reactor
 from misbot.mis_utils import solve_captcha
 
 class ResultsSpider(InitSpider):
+    """Take screenshot of ``http://report.aldel.org/student/test_marks_report.php``
+    and send it to the user via :py:class:`scraper.pipelines.ResultsScreenshotPipeline`
+    
+    :param InitSpider: Base Spider with initialization facilities
+    :type InitSpider: Spider
+    """
     name = 'results'
     allowed_domains = ['report.aldel.org']
     login_page = 'http://report.aldel.org/student_page.php'
@@ -46,7 +52,7 @@ class ResultsSpider(InitSpider):
             self.logger.warning("Login failed! Check site status and credentials.")
             # Something went wrong, we couldn't log in, so nothing happens.
     def parse(self, response):
-        '''Start SplashRequest'''
+        """Send a SplashRequest and forward the response to :py:func:`parse_result`"""
         url = 'http://report.aldel.org/student/test_marks_report.php'
         splash_args = {
             'html': 1,
@@ -58,7 +64,9 @@ class ResultsSpider(InitSpider):
         yield SplashRequest(url, self.parse_result, endpoint='render.json', args=splash_args)
 
     def parse_result(self, response):
-        '''Store the screenshot'''
+        """Downloads and saves the attendance report in ``files/<Student_ID>_tests.png``
+        format.
+        """
         imgdata = base64.b64decode(response.data['png'])
         filename = 'files/{}_tests.png'.format(self.username)
         with open(filename, 'wb') as f:
@@ -66,7 +74,16 @@ class ResultsSpider(InitSpider):
             self.logger.info("Saved test report as: {}_tests.png".format(self.username))
 
 def scrape_results(username, password, chatID):
-    '''Run the spider multiple times, without hitting ReactorNotRestartable.Forks own process.'''
+    """Run the spider multiple times, without hitting ``ReactorNotRestartable`` exception. Forks own process.
+    
+    :param username: student's PID (format: XXXNameXXXX)
+                     where   X - integers
+    :type username: str
+    :param password: student's password for student portal
+    :type password: str
+    :param chatID: 9-Digit unique user ID
+    :type chatID: str
+    """
     def f(q):
         try:
             runner = crawler.CrawlerRunner({

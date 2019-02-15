@@ -3,8 +3,8 @@
 [![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-blue.svg)](https://t.me/SJCET_MIS_BOT)
 [![Telegram Channel](https://img.shields.io/badge/Telegram-Channel-blue.svg)](https://t.me/joinchat/AAAAAEzdjHzLCzMiKpUw6w)
 
-# Introduction
-I created this bot as a means to avoid Defaulter's List, and I hope this bot can help others avoid it, too. The bot is hosted on Digital Ocean. 
+# About
+I created this bot as a means to avoid Defaulter's List, and I hope this bot can help others avoid it, too. The bot is hosted on the Google Cloud Platform (GCP). 
 
 ## Features
   * **CAPTCHA Bypass**
@@ -53,8 +53,8 @@ I created this bot as a means to avoid Defaulter's List, and I hope this bot can
 
   
 
-## Installation
-[Read the wiki](https://github.com/ArionMiles/MIS-Bot/wiki) on getting this bot up and running for yourself.
+## Installation and Documentation
+Read the documentation at mis-bot.readthedocs.io on getting this bot up and running for yourself.
 
 # Roadmap
  * ~Attendance scraper~

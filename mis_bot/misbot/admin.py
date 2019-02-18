@@ -7,6 +7,7 @@ from sqlalchemy import and_
 from misbot.decorators import admin
 from misbot.push_notifications import push_message_threaded, delete_threaded, get_user_list
 from misbot.states import NOTIF_MESSAGE, NOTIF_CONFIRM, ASK_UUID, CONFIRM_REVERT
+from misbot.mis_utils import clean_attendance_records
 from scraper.models import PushMessage, PushNotification
 from scraper.database import db_session
 
@@ -162,3 +163,18 @@ def confirm_revert(bot, update, user_data):
         bot.sendMessage(chat_id=update.message.chat_id, text="Revert Aborted!", reply_markup=reply_markup)
         return ConversationHandler.END
     return
+
+@admin
+def clean_all_attendance_records(bot, update):
+    """Activated by ``/clean`` command.
+    See :py:func:`misbot.mis_utils.clean_attendance_records` to
+    see what this does.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    """
+    lectures, practicals = clean_attendance_records()
+    message_content = "{} Lecture and {} Practical records cleared.".format(lectures, practicals)
+    update.message.reply_text(message_content)

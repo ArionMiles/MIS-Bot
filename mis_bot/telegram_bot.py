@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv(verbose=True)
 
 from misbot.admin import push_notification, notification_message, notification_confirm, revert_notification, \
-ask_uuid, confirm_revert
+ask_uuid, confirm_revert, clean_all_attendance_records
 from misbot.attendance_target import attendance_target, select_yn, input_target, edit_attendance_target, update_target
 from misbot.bunk import bunk, bunk_choose, bunk_input, bunk_calc
 from misbot.decorators import signed_up, admin
@@ -101,6 +101,8 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)]
     )
 
+    clean_records_handler = CommandHandler('clean', clean_all_attendance_records)
+
     attendance_handler = CommandHandler('attendance', attendance)
     results_handler = CommandHandler('results', results)
     itinerary_handler = CommandHandler('itinerary', itinerary, pass_args=True)
@@ -126,6 +128,7 @@ def main():
     dispatcher.add_handler(tips_handler)
     dispatcher.add_handler(push_notification_handler)
     dispatcher.add_handler(delete_notification_handler)
+    dispatcher.add_handler(clean_records_handler)
     dispatcher.add_handler(unknown_message)
 
     if DEBUG:

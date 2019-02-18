@@ -141,6 +141,19 @@ def crop_image(path):
         return True
 
 
+def clean_attendance_records():
+    """Delete all lectures and practical records from the DB.
+    To be used at the beginning of a new semester so that ``/bunk`` command
+    doesn't display lectures of previous semester(s).
+    
+    :return: Number of records deleted from Lecture and Practical tables.
+    :rtype: tuple
+    """
+    lecture_records = db_session.query(Lecture).delete()
+    practical_records = db_session.query(Practical).delete()
+    db_session.commit()
+    return lecture_records, practical_records
+
 def get_user_info(chat_id):
     """Give user data.
     
@@ -180,3 +193,5 @@ def solve_captcha(session_id):
         c = CaptchaApi()
         captcha_answer = c.predict(path)
         return captcha_answer
+
+

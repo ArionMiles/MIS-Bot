@@ -8,7 +8,7 @@ from scraper.models import Misc
 from scraper.database import db_session
 from misbot.decorators import signed_up
 from misbot.states import SELECT_YN, INPUT_TARGET, UPDATE_TARGET
-from misbot.mis_utils import until_x
+from misbot.mis_utils import until_x, get_user_info
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -40,8 +40,8 @@ def attendance_target(bot, update):
         new_misc_record = Misc(chatID=update.message.chat_id)
         db_session.add(new_misc_record)
         db_session.commit()
-        logger.info("Created new Misc record for {}".format(update.message.chat_id))
-        # bot.sendMessage(chat_id=update.message.chat_id, text="No records found!")
+        username = get_user_info(update.message.chat_id)['PID']
+        logger.info("Created new Misc record for {}".format(username))
         student_misc = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
     
     target = student_misc.attendance_target
@@ -119,6 +119,8 @@ def input_target(bot, update):
     db_session.query(Misc).filter(Misc.chatID == update.message.chat_id).update({'attendance_target': target_figure})
     db_session.commit()
     messageContent = "Your attendance target has been set to {}%.".format(target_figure)
+    username = get_user_info(update.message.chat_id)['PID']
+    logger.info("Set attendance target for {} to {}%".format(username, target_figure))
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     return ConversationHandler.END
 
@@ -185,6 +187,8 @@ def update_target(bot, update):
 
     db_session.query(Misc).filter(Misc.chatID == update.message.chat_id).update({'attendance_target': new_target})
     db_session.commit()
+    username = get_user_info(update.message.chat_id)['PID']
+    logger.info("Modified attendance target for {} to {}%".format(username, new_target))
     new_target_message = "Your attendance target has been updated to {}%!".format(new_target)
     bot.sendMessage(chat_id=update.message.chat_id, text=new_target_message)
     return ConversationHandler.END

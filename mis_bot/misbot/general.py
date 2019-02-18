@@ -6,7 +6,7 @@ from telegram.ext import ConversationHandler
 from sqlalchemy import and_
 
 from scraper.models import Chat
-from scraper.database import init_db, db_session
+from scraper.database import db_session
 from misbot.mis_utils import check_login, check_parent_login
 from misbot.decorators import signed_up
 from misbot.states import CREDENTIALS, PARENT_LGN
@@ -48,7 +48,6 @@ def register(bot, update, user_data):
     If both conditions are false, then asks user to input Student details (PID & Password)
     and gives control to :py:func:`credentials`
     """
-    init_db()
     if Chat.query.filter(Chat.chatID == update.message.chat_id).first():
         if Chat.query.filter(and_(Chat.chatID == update.message.chat_id, Chat.DOB != None)).first():
             messageContent = "Already registered!"

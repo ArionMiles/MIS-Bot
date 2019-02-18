@@ -4,7 +4,7 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler
 
 from scraper.models import Lecture, Practical
-from scraper.database import init_db, db_session
+from scraper.database import db_session
 from misbot.mis_utils import bunk_lecture
 from misbot.decorators import signed_up
 from misbot.states import CHOOSING, INPUT, CALCULATING

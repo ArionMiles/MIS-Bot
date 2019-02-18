@@ -8,7 +8,7 @@ import requests
 from sqlalchemy import and_
 from securimage_solver import CaptchaApi
 
-from scraper.database import init_db, db_session
+from scraper.database import db_session
 from scraper.models import Chat, Lecture, Practical
 
 SECURIMAGE_ENDPOINT = "http://report.aldel.org/securimage/securimage_show.php"
@@ -29,7 +29,6 @@ def bunk_lecture(n, tot_lec, chatID, stype, index):
     :return: Percentage drop/rise
     :rtype: float
     """
-    init_db()
     if(stype == "Lectures"):
         subject_data = Lecture.query.filter(Lecture.chatID == chatID).all()
     else:
@@ -53,7 +52,6 @@ def until_x(chatID, target):
     :return: Number of lectures to attend
     :rtype: int
     """
-    init_db()
     subject_data = Lecture.query.filter(and_(Lecture.chatID == chatID, Lecture.name == "Total")).first()
     attended = subject_data.attended
     conducted = subject_data.conducted

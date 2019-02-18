@@ -8,8 +8,8 @@ import requests
 from telegram.bot import Bot
 from telegram.utils.request import Request
 
-from scraper.database import init_db, db_session
-from scraper.models import Chat, PushNotification,PushMessage
+from scraper.database import db_session
+from scraper.models import Chat, PushNotification, PushMessage
 from misbot.mis_utils import get_user_info
 
 API_KEY_TOKEN = os.environ["TOKEN"]

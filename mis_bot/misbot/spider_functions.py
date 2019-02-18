@@ -6,8 +6,7 @@ from sqlalchemy import and_
 from scraper.spiders.attendance_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 from scraper.spiders.itinerary_spider import scrape_itinerary
-from scraper.database import init_db, db_session
-from scraper.models import Chat, Misc
+from scraper.models import Chat
 from misbot.decorators import signed_up
 from misbot.mis_utils import until_x, crop_image, get_user_info
 

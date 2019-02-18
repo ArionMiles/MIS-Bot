@@ -5,7 +5,7 @@ import logging
 from telegram.bot import Bot
 from sqlalchemy import and_
 
-from scraper.database import init_db, db_session
+from scraper.database import db_session
 from scraper.models import Lecture, Practical, Chat, Misc
 from scraper.items import Lectures, Practicals
 

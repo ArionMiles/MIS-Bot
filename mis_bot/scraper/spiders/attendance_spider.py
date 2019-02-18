@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 from os import environ
 import base64
+
 from scrapy.spiders.init import InitSpider
 from scrapy.http import Request, FormRequest
 import scrapy.crawler as crawler
@@ -8,7 +9,7 @@ from twisted.internet import reactor
 from multiprocessing import Process, Queue
 from scrapy_splash import SplashRequest
 
-from ..items import Lectures, Practicals
+from scraper.items import Lectures, Practicals
 from misbot.mis_utils import solve_captcha
 
 class AttendanceSpider(InitSpider):
@@ -116,7 +117,7 @@ def scrape_attendance(username, password, chatID):
             runner = crawler.CrawlerRunner({
                 'ITEM_PIPELINES': {'scraper.pipelines.LecturePipeline': 300,
                                    'scraper.pipelines.PracticalPipeline': 400,
-                                   'scraper.pipelines.AttendanceScreenshotPipeline':500,},
+                                   'scraper.pipelines.AttendanceScreenshotPipeline': 500,},
 
                 'DOWNLOADER_MIDDLEWARES': {'scrapy_splash.SplashCookiesMiddleware': 723,
                                            'scrapy_splash.SplashMiddleware': 725,

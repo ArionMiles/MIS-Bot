@@ -178,8 +178,10 @@ def cancel(bot, update):
 def unknown(bot, update):
     """Respond to incomprehensible messages/commands with some canned responses."""
     can = ["Seems like I'm not programmed to understand this yet.", "I'm not a fully functional A.I. ya know?",
-    "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "Damn you're dumb.", "42",
-    "We cannot afford machine learning to make this bot smart!", "We don't use NLP.", "I really wish we had a neural network."]
+        "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "Damn you're dumb.", "42",
+        "We cannot afford machine learning to make this bot smart!", "We don't use NLP.", "I really wish we had a neural network.",
+        "You make me wish I had middle fingers.", "Sorry, did you say something? I wasn't listening.",
+        "Are you always such an idiot, or do you just like to show off here?", "Talk to the hand. ✋"]
     messageContent = random.choice(can)
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)

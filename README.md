@@ -68,6 +68,7 @@ Read the documentation at mis-bot.readthedocs.io on getting this bot up and runn
  * [Vikas Yadav (v1k45)](https://github.com/v1k45)
  * [Sampriti Panda](https://github.com/sampritipanda)
  * [Sabine Wieluch (bleeptrack)](https://github.com/bleeptrack) (Gave us a really cute [Profile Photo](media/avatar.png)!)
+ * [Amey Khale (Noctis0712)](https://github.com/Noctis0712)
 
 # License
 MIT License. Please see [License](LICENSE.md) file for more information.

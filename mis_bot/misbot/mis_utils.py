@@ -1,5 +1,7 @@
 from __future__ import division
 import shutil
+from datetime import datetime, timedelta
+import random
 
 from PIL import Image
 from sympy.solvers import solve
@@ -9,9 +11,18 @@ from sqlalchemy import and_
 from securimage_solver import CaptchaApi
 
 from scraper.database import db_session
-from scraper.models import Chat, Lecture, Practical
+from scraper.models import Chat, Lecture, Practical, RateLimit
 
 SECURIMAGE_ENDPOINT = "http://report.aldel.org/securimage/securimage_show.php"
+
+list_of_gifs = ["https://media.giphy.com/media/uSJF1fS5c3fQA/giphy.gif",
+                "https://media.giphy.com/media/lRmjNrQZkKVuE/giphy.gif",
+                "https://media.giphy.com/media/1zSz5MVw4zKg0/giphy.gif",
+                "https://media.giphy.com/media/jWOLrt5JSNyXS/giphy.gif",
+                "https://media.giphy.com/media/27tE5WpzjK0QEEm0WC/giphy.gif",
+                "https://media.giphy.com/media/46itMIe0bkQeY/giphy.gif",
+                "https://i.imgur.com/CoWZ05t.gif",
+                "https://media.giphy.com/media/48YKCwrp4Kt8I/giphy.gif"]
 
 def bunk_lecture(n, tot_lec, chatID, stype, index):
     """Calculates % drop/rise if one chooses to bunk certain lectures. 
@@ -154,6 +165,7 @@ def clean_attendance_records():
     db_session.commit()
     return lecture_records, practical_records
 
+
 def get_user_info(chat_id):
     """Give user data.
     
@@ -195,3 +207,48 @@ def solve_captcha(session_id):
         return captcha_answer
 
 
+def rate_limited(bot, chat_id, command):
+    """Checks if user has made a request in the past 5 minutes.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param chat_id: 9-Digit unique user ID
+    :type chat_id: str
+    :param command: Telegram command
+    :type command: str
+    :return: True if user has made a request in past 5 mins, else False
+    :rtype: bool
+    """
+    rate_limit = RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command)).first()
+
+    if rate_limit is None:
+        new_rate_limit_record = RateLimit(chatID=chat_id, status='new', command=command, count=0)
+        db_session.add(new_rate_limit_record)
+        db_session.commit()
+        rate_limit = RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command)).first()
+
+    if abs(datetime.now() - rate_limit.requested_at) < timedelta(minutes=5):
+        if rate_limit.count < 1:
+            RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command))\
+                           .update({'count': rate_limit.count + 1})
+            db_session.commit()
+            return False
+        elif rate_limit.count < 2:
+            RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command))\
+                           .update({'count': rate_limit.count + 1})
+            db_session.commit()
+            message_content = "You've already requested attendance in the past 5 minutes. Please wait 5 minutes before sending another request."
+            bot.send_message(chat_id=chat_id, text=message_content)
+            return True
+
+        elif rate_limit.count in range(2, 1000):
+            RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command))\
+                           .update({'count': rate_limit.count + 1})
+            db_session.commit()
+            bot.send_animation(chat_id=chat_id, animation=random.choice(list_of_gifs))
+            return True
+    else:
+        RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command))\
+                       .update({'count': 1, 'requested_at': datetime.now()})
+        db_session.commit()
+        return False

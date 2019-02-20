@@ -6,9 +6,10 @@ from sqlalchemy import and_
 from scraper.spiders.attendance_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 from scraper.spiders.itinerary_spider import scrape_itinerary
-from scraper.models import Chat
+from scraper.models import Chat, RateLimit
+from scraper.database import db_session
 from misbot.decorators import signed_up
-from misbot.mis_utils import until_x, crop_image, get_user_info
+from misbot.mis_utils import until_x, crop_image, get_user_info, rate_limited
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -36,11 +37,11 @@ def attendance(bot, update):
     user_info = get_user_info(chatID)
     Student_ID = user_info['PID']
     password = user_info['password']
-    bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
 
-    #Run AttendanceSpider
-    scrape_attendance(Student_ID, password, chatID)
-
+    if not rate_limited(bot, chatID, "attendance"):
+        bot.send_chat_action(chat_id=chatID, action='upload_photo')
+        scrape_attendance(Student_ID, password, chatID)
+    
 
 @signed_up
 def results(bot, update):
@@ -63,10 +64,11 @@ def results(bot, update):
     user_info = get_user_info(chatID)
     Student_ID = user_info['PID']
     password = user_info['password']
-    bot.send_chat_action(chat_id=chatID, action='upload_photo')
 
     #Run ResultsSpider
-    scrape_results(Student_ID, password, chatID)
+    if not rate_limited(bot, chatID, "results"):
+        bot.send_chat_action(chat_id=chatID, action='upload_photo')
+        scrape_results(Student_ID, password, chatID)
 
 
 @signed_up
@@ -101,9 +103,12 @@ def itinerary(bot, update, args):
     Student_ID = user_info['PID']
     DOB = user_info['DOB']
 
-    if args:
-        bot.send_chat_action(chat_id=update.message.chat_id, action='upload_document')
-        scrape_itinerary(Student_ID, DOB, chatID, uncropped=True)
-    else:
-        bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
-        scrape_itinerary(Student_ID, DOB, chatID)    
+    if not rate_limited(bot, chatID, "itinerary"):
+        if args:
+            bot.send_chat_action(chat_id=update.message.chat_id, action='upload_document')
+            scrape_itinerary(Student_ID, DOB, chatID, uncropped=True)
+            return
+        else:
+            bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
+            scrape_itinerary(Student_ID, DOB, chatID)
+            return

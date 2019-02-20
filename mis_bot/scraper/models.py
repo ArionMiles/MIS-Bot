@@ -1,6 +1,9 @@
 import uuid
 from datetime import datetime
+
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
+from sqlalchemy_utils.types.choice import ChoiceType
+
 from scraper.database import Base
 
 class Lecture(Base):
@@ -105,3 +108,33 @@ class PushNotification(Base):
     def __repr__(self):
         return '<Push Notification {} | {}>'.format(self.chatID, self.message_id)
 
+class RateLimit(Base):
+    STAGES = [
+        ('new', 'New'),
+        ('failed', 'Failed'),
+        ('completed', 'Completed'),
+    ]
+
+    COMMANDS = [
+        ('attendance', 'Attendance'),
+        ('itinerary', 'Itinerary'),
+        ('results', 'Results'),
+    ]
+
+    __tablename__ = 'ratelimit'
+    id = Column(Integer, primary_key=True)
+    chatID = Column(String(512))
+    requested_at = Column(DateTime, default=datetime.now)
+    status = Column(ChoiceType(STAGES))
+    command = Column(ChoiceType(COMMANDS))
+    count = Column(Integer)
+
+    def __init__(self, chatID, status, command, count, requested_at=None):
+        self.chatID = chatID
+        self.requested_at = requested_at
+        self.status = status
+        self.command = command
+        self.count = count
+    
+    def __repr__(self):
+        return '<Rate Limit {} | {}>'.format(self.chatID, self.command)

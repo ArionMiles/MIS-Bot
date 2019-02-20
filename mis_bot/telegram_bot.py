@@ -20,7 +20,7 @@ from misbot.spider_functions import attendance, results, itinerary
 from misbot.states import *
 from misbot.until_func import until, until_eighty
 
-from scraper.database import db_session
+from scraper.database import db_session, init_db
 from scraper.models import Chat, Lecture, Practical, Misc, PushNotification, PushMessage
 
 TOKEN = os.environ['TOKEN']
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Start the bot and use webhook to detect and respond to new messages."""
+    init_db()
     dispatcher = updater.dispatcher
 
     # Handlers

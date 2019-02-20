@@ -9,7 +9,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    image: misbot.v4.0
+    image: misbot.v4.1
     ports:
      - "8443:8443"
     links:
@@ -17,4 +17,4 @@ services:
     depends_on:
       - splash
     volumes:
-      - ./mis-bot/:/app
+      - ./mis_bot/:/app

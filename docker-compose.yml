@@ -17,4 +17,4 @@ services:
     depends_on:
       - splash
     volumes:
-      - ./mis-bot/:/app
+      - ./mis_bot/:/app

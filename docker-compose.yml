@@ -18,3 +18,4 @@ services:
       - splash
     volumes:
       - ./mis_bot/:/app
+      - "/etc/localtime:/etc/localtime:ro"

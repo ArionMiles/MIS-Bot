@@ -27,6 +27,9 @@ Linux
 `Learn how to install docker here.
 <https://docs.docker.com/install/linux/docker-ce/ubuntu/>`_
 
+`Learn how to install docker-compose here.
+<https://docs.docker.com/compose/install/>`_
+
 Windows
 ~~~~~~~
 
@@ -66,14 +69,17 @@ Development Setup
 Cloning the repository
 ^^^^^^^^^^^^^^^^^^^^^^
 Clone the repository by running (in ``Documents`` or some other directory, whichever you created the vagrant VM in the previous step):
+
 .. code-block::
-   https://github.com/ArionMiles/MIS-Bot/
+   git clone https://github.com/ArionMiles/MIS-Bot/
 
 Open the project directory in terminal with
+
 .. code-block::
    cd MIS-Bot/
 
 Run the below command to create folders which will be required by our bot:
+
 .. code-block::
    mkdir -p files/captcha/
 
@@ -132,3 +138,6 @@ Start the container by running this from the root directory of the project:
 and after everything is installed, the bot should be up.
 
 Cool! Now you've got the bot running, start experimenting, create new features, the possibilities are endless!
+
+ON GCP: Switch to your project, go to Compute Instance > VPC Network > Firewall Rules
+and change "default-http" rule's Protocol/ports value from "tcp:80" to all to allow tg webhook to work 

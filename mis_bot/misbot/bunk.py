@@ -5,9 +5,10 @@ from telegram.ext import ConversationHandler
 
 from scraper.models import Lecture, Practical
 from scraper.database import db_session
-from misbot.mis_utils import bunk_lecture
+from misbot.mis_utils import bunk_lecture, get_subject_name, build_menu
 from misbot.decorators import signed_up
 from misbot.states import CHOOSING, INPUT, CALCULATING
+
 
 @signed_up
 def bunk(bot, update):
@@ -56,34 +57,35 @@ def bunk_choose(bot, update, user_data):
     :rtype: int
     """
     user_data['type'] = update.message.text
+    chat_id = update.message.chat_id
     stype = user_data['type']
     reply_markup = ReplyKeyboardRemove()
-    bot.sendMessage(chat_id=update.message.chat_id, text="{}".format(stype), reply_markup=reply_markup)
+    reply_text = "{}\nUse /cancel to exit.".format(stype)
+    bot.sendMessage(chat_id=chat_id, text=reply_text, reply_markup=reply_markup)
 
     if stype == "Lectures":
-        subject_data = Lecture.query.filter(Lecture.chatID == update.message.chat_id).all()
+        subject_data = Lecture.query.filter(Lecture.chatID == chat_id).all()
     else:
-        subject_data = Practical.query.filter(Practical.chatID == update.message.chat_id).all()
-
+        subject_data = Practical.query.filter(Practical.chatID == chat_id).all()
 
     if not subject_data: #If list is empty
         messageContent = textwrap.dedent("""
             No records found!
             Please use /attendance to pull your attendance from the website first.
             """)
-        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+        bot.sendMessage(chat_id=chat_id, text=messageContent)
         return ConversationHandler.END
 
-    digit = 1
     messageContent = ""
 
-    for subject in subject_data:
+    for digit, subject in enumerate(subject_data):
         subject_name = subject.name
-        messageContent += "/{digit}. {subject_name}\n".format(digit=digit, subject_name=subject_name)
-        digit += 1
+        messageContent += "{digit}. {subject_name}\n".format(digit=digit+1, subject_name=subject_name)
 
-    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
-    digit = 0
+    keyboard = build_menu(subject_data, 3, footer_buttons='Cancel')
+    reply_markup = ReplyKeyboardMarkup(keyboard)
+    user_data['reply_markup'] = reply_markup
+    bot.sendMessage(chat_id=chat_id, text=messageContent, reply_markup=reply_markup)
     return INPUT
 
 
@@ -97,17 +99,22 @@ def bunk_input(bot, update, user_data):
     :type update: telegram.update.Update
     :param user_data: User data dictionary
     :type user_data: dict
-    :return: ConversationHandler.END if message is "/cancel_bunk" else CALCULATING
+    :return: ConversationHandler.END if message is "Cancel" else CALCULATING
     :rtype: int
     """
-    user_data['index'] = update.message.text
-    if user_data['index'] == "/cancel_bunk":
+    reply_markup = ReplyKeyboardRemove()
+    if update.message.text == "Cancel":
         # Terminate bunk operation since fallback commands do not work with 
         # 2 conversation handlers present for some reason
         # if you figure it out, I'll buy you coffee
-        bot.sendMessage(chat_id=update.message.chat_id, text="Bunk operation cancelled! 😊")
+        bot.sendMessage(chat_id=update.message.chat_id, text="Bunk operation cancelled! 😊", reply_markup=reply_markup)
         return ConversationHandler.END
-
+    
+    try:
+        user_data['index'] = int(update.message.text)
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Please select a number from the menu.")
+        return
 
     messageContent = textwrap.dedent("""
         Send number of lectures you wish to bunk and total lectures conducted for that subject on that day,
@@ -115,8 +122,9 @@ def bunk_input(bot, update, user_data):
 
         e.g: If you wish to bunk 1 out of 5 lectures (total or per subject) conducted today, send
         `1 5`
+        Use /cancel to exit.
         """)
-    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown', reply_markup=reply_markup)
     return CALCULATING
 
 
@@ -138,34 +146,39 @@ def bunk_calc(bot, update, user_data):
     :rtype: None or int
     """
     user_data['figures'] = update.message.text
-    stype = user_data['type']
-    try:
-        index = int(user_data['index'].split('/')[1])
-    except ValueError:
+    chat_id = update.message.chat_id
+    
+    if user_data['figures'] == '/cancel':
+        bot.sendMessage(chat_id=chat_id, text="Bunk operation cancelled! 😊")
         return ConversationHandler.END
+
+    stype = user_data['type']
+    index = user_data['index']
     args = user_data['figures'].split(' ')
 
-    bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
+    bot.send_chat_action(chat_id=chat_id, action='typing')
 
     if len(args) == 2:
-        current = bunk_lecture(0, 0, update.message.chat_id, stype, index)
-        predicted = bunk_lecture(int(args[0]), int(args[1]), update.message.chat_id, stype, index)
-        no_bunk = bunk_lecture(0, int(args[1]), update.message.chat_id, stype, index)
+        current = bunk_lecture(0, 0, chat_id, stype, index)
+        predicted = bunk_lecture(int(args[0]), int(args[1]), chat_id, stype, index)
+        no_bunk = bunk_lecture(0, int(args[1]), chat_id, stype, index)
         loss = round((current - predicted), 2)
         gain = round((no_bunk - current), 2)
 
         messageContent = textwrap.dedent("""
-            Current: {current}
-            If you bunk: {predicted}
-            If you attend: {no_bunk}
+            Subject: {subject}
+            Current: {current}%
+            If you bunk: {predicted}%
+            If you attend: {no_bunk}%
 
-            Loss: {loss}
-            Gain: {gain}
+            Loss: {loss}%
+            Gain: {gain}%
 
-            If you wish to check for another subject, select their number from above or press /cancel_bunk to cancel
+            If you wish to check for another subject, select the respective number or press `Cancel` to cancel
             this operation.
-            """).format(current=current, predicted=predicted, no_bunk=no_bunk, loss=loss, gain=gain)
-        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+            """).format(current=current, predicted=predicted, no_bunk=no_bunk, loss=loss, gain=gain, 
+            subject=get_subject_name(chat_id, index, stype))
+        bot.sendMessage(chat_id=chat_id, text=messageContent, reply_markup=user_data['reply_markup'], parse_mode='markdown')
         return INPUT
     else:
         messageContent = textwrap.dedent("""
@@ -173,7 +186,8 @@ def bunk_calc(bot, update, user_data):
             
             e.g: If you wish to bunk 1 out of 5 total lectures conducted today, send
             `1 5`
+            Or, send /cancel to quit.
             """)
-        bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
+        bot.sendMessage(chat_id=chat_id, text=messageContent, parse_mode='markdown')
         return
     return ConversationHandler.END

@@ -40,7 +40,7 @@ def bunk_lecture(n, tot_lec, chatID, stype, index):
     :return: Percentage drop/rise
     :rtype: float
     """
-    if(stype == "Lectures"):
+    if stype == "Lectures":
         subject_data = Lecture.query.filter(Lecture.chatID == chatID).all()
     else:
         subject_data = Practical.query.filter(Practical.chatID == chatID).all()
@@ -252,3 +252,39 @@ def rate_limited(bot, chat_id, command):
                        .update({'count': 1, 'requested_at': datetime.now()})
         db_session.commit()
         return False
+
+def get_subject_name(chat_id, index, stype):
+    """Return name of subject for a given user
+    
+    :param chat_id: 9-Digit unique user ID
+    :type chat_id: str
+    :param index: Index of the user-selected subject from list of subjects
+    :type index: int
+    :param stype: Subject type (Lectures or Practicals)
+    :type stype: str
+    :return: Subject name
+    :rtype: str
+    """
+    if stype == "Lectures":
+        subject_data = Lecture.query.filter(Lecture.chatID == chat_id).all()
+    else:
+        subject_data = Practical.query.filter(Practical.chatID == chat_id).all()
+    index -= 1 # DB Tables are Zero-Index 
+    return subject_data[index].name
+
+
+def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
+    menu = []
+    digit = 1
+    for i in range(0, len(buttons), n_cols):
+        row = []
+        for j in buttons[i:i +n_cols]:
+            row.append(str(digit))
+            digit += 1
+        menu.append(row)
+
+    if header_buttons:
+        menu.insert(0, [header_buttons])
+    if footer_buttons:
+        menu.append([footer_buttons])
+    return menu

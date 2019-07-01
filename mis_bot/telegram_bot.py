@@ -54,7 +54,7 @@ def main():
 
         states={
             CHOOSING: [MessageHandler(Filters.text | Filters.command, bunk_choose, pass_user_data=True)],
-            INPUT: [MessageHandler(Filters.command | Filters.command, bunk_input, pass_user_data=True)],
+            INPUT: [MessageHandler(Filters.text, bunk_input, pass_user_data=True)],
             CALCULATING: [MessageHandler(Filters.text | Filters.command, bunk_calc, pass_user_data=True)]
             },
 

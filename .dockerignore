@@ -6,3 +6,4 @@ media/
 .vscode
 chats_migrations/
 docs/
+example.env

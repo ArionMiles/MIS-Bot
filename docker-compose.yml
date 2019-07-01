@@ -9,7 +9,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    image: misbot.v4.1
+    image: misbot.v4.2
     ports:
      - "8443:8443"
     links:

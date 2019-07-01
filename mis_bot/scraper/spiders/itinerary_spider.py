@@ -83,6 +83,7 @@ class ItinerarySpider(InitSpider):
         with open(filename, 'wb') as f:
             f.write(imgdata)
             self.logger.info("Saved itinerary attendance report as: {}_itinerary.png".format(self.username))
+            self.logger.info(response.request.headers['User-Agent'])
 
 
 def scrape_itinerary(username, dob, chatID, uncropped=False):
@@ -110,6 +111,7 @@ def scrape_itinerary(username, dob, chatID, uncropped=False):
                 'SPLASH_URL':environ['SPLASH_INSTANCE'],
                 'SPIDER_MIDDLEWARES':{'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,},
                 'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
+                'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
             })
             deferred = runner.crawl(ItinerarySpider, username=username, dob=dob, chatID=chatID, uncropped=uncropped)
             deferred.addBoth(lambda _: reactor.stop())

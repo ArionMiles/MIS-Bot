@@ -60,8 +60,8 @@ def bunk_choose(bot, update, user_data):
     chat_id = update.message.chat_id
     stype = user_data['type']
     reply_markup = ReplyKeyboardRemove()
-    reply_text = "{}\nUse /cancel to exit.".format(stype)
-    bot.sendMessage(chat_id=chat_id, text=reply_text, reply_markup=reply_markup)
+    reply_text = "{}\nChoose `Cancel` to exit.".format(stype)
+    bot.sendMessage(chat_id=chat_id, text=reply_text, reply_markup=reply_markup, parse_mode='markdown')
 
     if stype == "Lectures":
         subject_data = Lecture.query.filter(Lecture.chatID == chat_id).all()

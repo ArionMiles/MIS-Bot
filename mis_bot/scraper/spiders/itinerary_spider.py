@@ -83,7 +83,6 @@ class ItinerarySpider(InitSpider):
         with open(filename, 'wb') as f:
             f.write(imgdata)
             self.logger.info("Saved itinerary attendance report as: {}_itinerary.png".format(self.username))
-            self.logger.info(response.request.headers['User-Agent'])
 
 
 def scrape_itinerary(username, dob, chatID, uncropped=False):

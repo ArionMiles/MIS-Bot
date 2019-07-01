@@ -14,6 +14,7 @@ from misbot.mis_utils import get_user_info
 
 API_KEY_TOKEN = os.environ["TOKEN"]
 list_of_objs = []
+inactive_users = []
 
 def get_user_list():
     """Retrieves the ``chatID`` of all users from ``Chat`` table. A tuple is returned
@@ -71,7 +72,14 @@ def push_message_threaded(message, user_list):
     
     db_session.bulk_save_objects(list_of_objs)
     db_session.commit()
+
+    delete_users = Chat.__table__.delete().where(Chat.chatID.in_(inactive_users))
+    db_session.execute(delete_users)
+    db_session.commit()
+
+
     list_of_objs.clear()
+    inactive_users.clear()
     
     return elapsed, message_uuid
  
@@ -100,6 +108,7 @@ def push_t(bot, message, message_uuid, chat_id):
     except Exception as e:
         push_message_record = PushNotification(message_uuid=message_uuid, chatID=chat_id, failure_reason=str(e))
         list_of_objs.append(push_message_record)
+        inactive_users.append(chat_id)
 
 def delete_threaded(message_id_list, user_list):
     """Use ``ThreadPoolExecutor`` to delete notification message asynchronously for all

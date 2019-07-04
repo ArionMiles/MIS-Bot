@@ -6,6 +6,7 @@ import random
 from PIL import Image
 from sympy.solvers import solve
 from sympy import Symbol, Eq, solveset
+from sympy.sets.sets import EmptySet
 import requests
 from sqlalchemy import and_
 from securimage_solver import CaptchaApi
@@ -69,6 +70,8 @@ def until_x(chatID, target):
     x = Symbol('x')
     expr = Eq((((int(attended) + x)/(int(conducted) + x))*100), target)
     soln = solveset(expr, x)
+    if isinstance(soln, EmptySet): # If attendance is 100%, soln evaluates to an EmptySet
+        return -1
     return next(iter(soln)) # Extracting the integer from singleton set soln.
 
 

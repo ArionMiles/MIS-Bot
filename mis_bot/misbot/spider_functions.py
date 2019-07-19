@@ -6,6 +6,7 @@ from sqlalchemy import and_
 from scraper.spiders.attendance_spider import scrape_attendance
 from scraper.spiders.results_spider import scrape_results
 from scraper.spiders.itinerary_spider import scrape_itinerary
+from scraper.spiders.profile_spider import scrape_profile
 from scraper.models import Chat, RateLimit
 from scraper.database import db_session
 from misbot.decorators import signed_up
@@ -112,3 +113,29 @@ def itinerary(bot, update, args):
             bot.send_chat_action(chat_id=update.message.chat_id, action='upload_photo')
             scrape_itinerary(Student_ID, DOB, chatID)
             return
+
+@signed_up
+def profile(bot, update):
+    """Fetch profile info from the Aldel MIS. Core function.
+    Runs ``ProfileSpider`` for registered users and passes it their ``Student_ID`` (PID) &
+    ``Password``.
+
+    ProfileSpider creates a image file of the format: ``<Student_ID>_profile.png``
+    File is deleted after being sent to the user.
+    If the file is unavailable, error message is sent to the user.
+    
+    :param bot: Telegram Bot object
+    :type bot: telegram.bot.Bot
+    :param update: Telegram Update object
+    :type update: telegram.update.Update
+    """
+    # Get chatID and user details based on chatID
+    chatID = update.message.chat_id
+    user_info = get_user_info(chatID)
+    Student_ID = user_info['PID']
+    password = user_info['password']
+
+    #Run ProfileSpider
+    if not rate_limited(bot, chatID, "profile"):
+        bot.send_chat_action(chat_id=chatID, action='upload_photo')
+        scrape_profile(Student_ID, password, chatID)

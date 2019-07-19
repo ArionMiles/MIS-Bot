@@ -16,7 +16,7 @@ from misbot.decorators import signed_up, admin
 from misbot.general import start, register, credentials, parent_login, delete, cancel, unknown, help_text, tips
 from misbot.mis_utils import bunk_lecture, until_x, check_login, check_parent_login, crop_image
 from misbot.push_notifications import push_message_threaded, get_user_list, delete_threaded
-from misbot.spider_functions import attendance, results, itinerary
+from misbot.spider_functions import attendance, results, itinerary, profile
 from misbot.states import *
 from misbot.until_func import until, until_eighty
 
@@ -107,6 +107,7 @@ def main():
     attendance_handler = CommandHandler('attendance', attendance)
     results_handler = CommandHandler('results', results)
     itinerary_handler = CommandHandler('itinerary', itinerary, pass_args=True)
+    profile_handler = CommandHandler('profile', profile)
     eighty_handler = CommandHandler('until80', until_eighty)
     until_handler = CommandHandler('until', until, pass_args=True)
     delete_handler = CommandHandler('delete', delete)
@@ -119,6 +120,7 @@ def main():
     dispatcher.add_handler(delete_handler)
     dispatcher.add_handler(attendance_handler)
     dispatcher.add_handler(results_handler)
+    dispatcher.add_handler(profile_handler)
     dispatcher.add_handler(itinerary_handler)
     dispatcher.add_handler(bunk_handler)
     dispatcher.add_handler(eighty_handler)

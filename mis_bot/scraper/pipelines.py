@@ -115,3 +115,13 @@ class ResultsScreenshotPipeline(object):
         except IOError:
             bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
             logger.warning("Results screenshot failed! Check if site is blocking us or if Splash is up.")
+
+class ProfileScreenshotPipeline(object):
+    def close_spider(self, spider):
+        try:
+            bot.send_photo(chat_id=spider.chatID, photo=open("files/{}_profile.png".format(spider.username), 'rb'),
+                        caption='Student profile for {}'.format(spider.username))
+            remove('files/{}_profile.png'.format(spider.username)) #Delete saved image
+        except IOError:
+            bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
+            logger.warning("Profile screenshot failed! Check if site is blocking us or if Splash is up.")

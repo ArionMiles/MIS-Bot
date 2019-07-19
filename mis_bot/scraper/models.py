@@ -119,6 +119,7 @@ class RateLimit(Base):
         ('attendance', 'Attendance'),
         ('itinerary', 'Itinerary'),
         ('results', 'Results'),
+        ('profile', 'Profile'),
     ]
 
     __tablename__ = 'ratelimit'

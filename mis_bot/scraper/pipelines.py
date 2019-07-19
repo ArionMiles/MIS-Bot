@@ -119,8 +119,8 @@ class ResultsScreenshotPipeline(object):
 class ProfileScreenshotPipeline(object):
     def close_spider(self, spider):
         try:
-            bot.send_photo(chat_id=spider.chatID, photo=open("files/{}_profile.png".format(spider.username), 'rb'),
-                        caption='Student profile for {}'.format(spider.username))
+            bot.send_document(chat_id=spider.chatID, document=open("files/{}_profile.png".format(spider.username), 'rb'),
+                            caption='Student profile for {}'.format(spider.username))
             remove('files/{}_profile.png'.format(spider.username)) #Delete saved image
         except IOError:
             bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')

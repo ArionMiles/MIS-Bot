@@ -137,5 +137,5 @@ def profile(bot, update):
 
     #Run ProfileSpider
     if not rate_limited(bot, chatID, "profile"):
-        bot.send_chat_action(chat_id=chatID, action='upload_photo')
+        bot.send_chat_action(chat_id=chatID, action='upload_document')
         scrape_profile(Student_ID, password, chatID)

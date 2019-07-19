@@ -240,7 +240,7 @@ def rate_limited(bot, chat_id, command):
             RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command))\
                            .update({'count': rate_limit.count + 1})
             db_session.commit()
-            message_content = "You've already requested attendance in the past 5 minutes. Please wait 5 minutes before sending another request."
+            message_content = "You've already used this command in the past 5 minutes. Please wait 5 minutes before sending another request."
             bot.send_message(chat_id=chat_id, text=message_content)
             return True
 

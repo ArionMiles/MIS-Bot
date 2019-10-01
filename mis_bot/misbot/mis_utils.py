@@ -281,7 +281,7 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     digit = 1
     for i in range(0, len(buttons), n_cols):
         row = []
-        for j in buttons[i:i +n_cols]:
+        for _ in buttons[i:i +n_cols]:
             row.append(str(digit))
             digit += 1
         menu.append(row)

@@ -3,6 +3,8 @@ import random
 import textwrap
 
 from telegram.ext import ConversationHandler
+from telegram.error import TelegramError, Unauthorized, BadRequest, TimedOut, ChatMigrated, NetworkError
+
 from sqlalchemy import and_
 
 from scraper.models import Chat
@@ -212,3 +214,26 @@ def tips(bot, update):
     \nMass bunks. 😝", "`/itinerary all` gives complete detailed attendance report since the start of semester."]
     messageContent = random.choice(tips)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
+
+def error_callback(bot, update, error):
+    """Simple error handling function. Handles PTB lib errors"""
+    try:
+        raise error
+    except Unauthorized:
+        # remove update.message.chat_id from conversation list
+        logger.info("TelegramError: Unauthorized user. User probably blocked the bot.")
+    except BadRequest as br:
+        # handle malformed requests
+        logger.info("TelegramError: {}".format(str(br)))
+    except TimedOut as time_out:
+        # handle slow connection problems
+        logger.info("TelegramError: {}".format(str(time_out)))
+    except NetworkError as ne:
+        # handle other connection problems
+        logger.info("TelegramError: {}".format(str(ne)))
+    except ChatMigrated as cm:
+        # the chat_id of a group has changed, use e.new_chat_id instead
+        logger.info("TelegramError: {}".format(str(cm)))
+    except TelegramError as e:
+        # handle all other telegram related errors
+        logger.info("TelegramError: {}".format(str(e)))

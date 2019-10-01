@@ -6,14 +6,16 @@ import random
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 from dotenv import load_dotenv
+
 load_dotenv(verbose=True)
 
-from misbot.admin import push_notification, notification_message, notification_confirm, revert_notification, \
-ask_uuid, confirm_revert, clean_all_attendance_records
+from misbot.admin import (push_notification, notification_message, notification_confirm, revert_notification,
+                        ask_uuid, confirm_revert, clean_all_attendance_records)
 from misbot.attendance_target import attendance_target, select_yn, input_target, edit_attendance_target, update_target
 from misbot.bunk import bunk, bunk_choose, bunk_input, bunk_calc
 from misbot.decorators import signed_up, admin
-from misbot.general import start, register, credentials, parent_login, delete, cancel, unknown, help_text, tips
+from misbot.general import (start, register, credentials, parent_login, delete, cancel, unknown, help_text, 
+                            tips, error_callback)
 from misbot.mis_utils import bunk_lecture, until_x, check_login, check_parent_login, crop_image
 from misbot.push_notifications import push_message_threaded, get_user_list, delete_threaded
 from misbot.spider_functions import attendance, results, itinerary, profile
@@ -133,6 +135,7 @@ def main():
     dispatcher.add_handler(delete_notification_handler)
     dispatcher.add_handler(clean_records_handler)
     dispatcher.add_handler(unknown_message)
+    dispatcher.add_error_handler(error_callback)
 
     if DEBUG:
         updater.start_polling(clean=True)

@@ -221,19 +221,19 @@ def error_callback(bot, update, error):
         raise error
     except Unauthorized:
         # remove update.message.chat_id from conversation list
-        logger.info("TelegramError: Unauthorized user. User probably blocked the bot.")
+        logger.warning("TelegramError: Unauthorized user. User probably blocked the bot.")
     except BadRequest as br:
         # handle malformed requests
-        logger.info("TelegramError: {}".format(str(br)))
+        logger.warning("TelegramError: {} | Text: {}".format(str(br), update.message.text))
     except TimedOut as time_out:
         # handle slow connection problems
-        logger.info("TelegramError: {}".format(str(time_out)))
+        logger.warning("TelegramError: {} | Text: {}".format(str(time_out), update.message.text))
     except NetworkError as ne:
         # handle other connection problems
-        logger.info("TelegramError: {}".format(str(ne)))
+        logger.warning("TelegramError: {} | Text: {}".format(str(ne), update.message.text))
     except ChatMigrated as cm:
         # the chat_id of a group has changed, use e.new_chat_id instead
-        logger.info("TelegramError: {}".format(str(cm)))
+        logger.warning("TelegramError: {} | Text: {}".format(str(cm), update.message.text))
     except TelegramError as e:
         # handle all other telegram related errors
-        logger.info("TelegramError: {}".format(str(e)))
+        logger.warning("TelegramError: {} | Text: {}".format(str(e), update.message.text))

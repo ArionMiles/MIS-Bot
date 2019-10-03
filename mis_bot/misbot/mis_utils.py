@@ -178,12 +178,12 @@ def get_user_info(chat_id):
     :rtype: dict
     """
     userChat = Chat.query.filter(Chat.chatID == chat_id).first()
-    Student_ID = userChat.PID
-    password = userChat.password
-    DOB = userChat.DOB
-    return {'PID': Student_ID,
-            'password': password,
-            'DOB': DOB}
+    if userChat is None:
+        return None
+    
+    return {'PID': userChat.PID,
+            'password': userChat.password,
+            'DOB': userChat.DOB}
 
 
 def solve_captcha(session_id):

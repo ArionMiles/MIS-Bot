@@ -3,6 +3,8 @@ from functools import wraps
 import logging
 
 from scraper.models import Chat
+from misbot.mis_utils import get_user_info
+from misbot.analytics import mp
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -44,11 +46,17 @@ def admin(func):
         chatID = update.message.chat_id
         if not str(chatID) == os.environ['ADMIN_CHAT_ID']:
             messageContent = "You are not authorized to use this command. This incident has been reported."
-            bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
-            user_info = Chat.query.filter(Chat.chatID == chatID).first()
-            if user_info:
-                logger.warning("Unauthorized Access attempt by {}".format(user_info.PID))
+            bot.sendMessage(chat_id=chatID, text=messageContent)
+            user = get_user_info(chatID)
+            if user:
+                mp.track(user['PID'], 'Admin Function Access Attempt', {'pid':user['PID'],
+                                                                        'link': update.message.from_user.link,
+                                                                    })
+                logger.warning("Unauthorized Access attempt by {}".format(user['PID']))
             else:
+                mp.track(user['PID'], 'Admin Function Access Attempt', {'chat_id':chatID,
+                                                                        'link': update.message.from_user.link,
+                                                                    })
                 logger.warning("Unauthorized Access attempt by {}".format(chatID))
             return
         return func(bot, update, *args, **kwargs)

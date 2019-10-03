@@ -5,10 +5,10 @@ from telegram.ext import ConversationHandler
 
 from scraper.models import Lecture, Practical
 from scraper.database import db_session
-from misbot.mis_utils import bunk_lecture, get_subject_name, build_menu
+from misbot.mis_utils import bunk_lecture, get_subject_name, build_menu, get_user_info
 from misbot.decorators import signed_up
 from misbot.states import CHOOSING, INPUT, CALCULATING
-
+from misbot.analytics import mp
 
 @signed_up
 def bunk(bot, update):
@@ -179,6 +179,9 @@ def bunk_calc(bot, update, user_data):
             """).format(current=current, predicted=predicted, no_bunk=no_bunk, loss=loss, gain=gain, 
             subject=get_subject_name(chat_id, index, stype))
         bot.sendMessage(chat_id=chat_id, text=messageContent, reply_markup=user_data['reply_markup'], parse_mode='markdown')
+        
+        username = get_user_info(chat_id)['PID']
+        mp.track(username, 'Bunk', {'category': stype })
         return INPUT
     else:
         messageContent = textwrap.dedent("""

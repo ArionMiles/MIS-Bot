@@ -9,6 +9,7 @@ from scraper.database import db_session
 from misbot.decorators import signed_up
 from misbot.states import SELECT_YN, INPUT_TARGET, UPDATE_TARGET
 from misbot.mis_utils import until_x, get_user_info
+from misbot.analytics import mp
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -65,6 +66,9 @@ def attendance_target(bot, update):
     
     messageContent = "You need to attend {} lectures to meet your target of {}%".format(no_of_lectures, target)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+
+    username = get_user_info(update.message.chat_id)['PID']
+    mp.track(username, 'Check Attendance Target')
     return ConversationHandler.END
 
 
@@ -122,6 +126,8 @@ def input_target(bot, update):
     username = get_user_info(update.message.chat_id)['PID']
     logger.info("Set attendance target for {} to {}%".format(username, target_figure))
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+
+    mp.track(username, 'Set Attendance Target', {'target': target_figure})
     return ConversationHandler.END
 
 
@@ -185,10 +191,13 @@ def update_target(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
         return
 
+    old_target = Misc.query.filter(Misc.chatID == update.message.chat_id).first().attendance_target
     db_session.query(Misc).filter(Misc.chatID == update.message.chat_id).update({'attendance_target': new_target})
     db_session.commit()
     username = get_user_info(update.message.chat_id)['PID']
     logger.info("Modified attendance target for {} to {}%".format(username, new_target))
     new_target_message = "Your attendance target has been updated to {}%!".format(new_target)
     bot.sendMessage(chat_id=update.message.chat_id, text=new_target_message)
+
+    mp.track(username, 'Edit Attendance Target', {'new_target': new_target, 'old_target': old_target })
     return ConversationHandler.END

@@ -4,14 +4,14 @@ import textwrap
 
 from telegram.ext import ConversationHandler
 from telegram.error import TelegramError, Unauthorized, BadRequest, TimedOut, ChatMigrated, NetworkError
-
 from sqlalchemy import and_
 
 from scraper.models import Chat
 from scraper.database import db_session
-from misbot.mis_utils import check_login, check_parent_login
+from misbot.mis_utils import check_login, check_parent_login, get_user_info
 from misbot.decorators import signed_up
 from misbot.states import CREDENTIALS, PARENT_LGN
+from misbot.analytics import mp
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -86,7 +86,7 @@ def credentials(bot, update, user_data):
     storing ``Student_ID`` (PID) in user_data dict.
     """
     chatID = update.message.chat_id
-    #If message contains less or more than 2 arguments, send message and stop.
+    # If message contains less or more than 2 arguments, send message and stop.
     try:
         Student_ID, passwd = update.message.text.split()
     except ValueError:
@@ -109,7 +109,7 @@ def credentials(bot, update, user_data):
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
         return
 
-    # Create an object of Class <Chat> and store Student_ID, password, and Telegeram
+    # Create an object of Class <Chat> and store Student_ID, password, and Telegram
     # User ID, Add it to the database, commit it to the database.
 
     userChat = Chat(PID=Student_ID, password=passwd, chatID=chatID)
@@ -151,9 +151,19 @@ def parent_login(bot, update, user_data):
     db_session.query(Chat).filter(Chat.chatID == chatID).update({'DOB': DOB})
     db_session.commit()
     logger.info("New Registration! Username: {}".format((Student_ID)))
-
     messageContent = "Welcome {}!\nStart by checking your /attendance or /itinerary".format(new_user)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
+
+    mp.track(Student_ID, 'New User')
+    mp.people_set(Student_ID, {
+                                'pid': Student_ID,
+                                'first_name': update.message.from_user.first_name,
+                                'last_name': update.message.from_user.last_name,
+                                'username': update.message.from_user.username,
+                                'link': update.message.from_user.link,
+                                'active': True,
+                            })
+
     return ConversationHandler.END
 
 
@@ -161,13 +171,16 @@ def parent_login(bot, update, user_data):
 def delete(bot, update):
     """Delete a user's credentials if they wish to stop using the bot or update them."""
     chatID = update.message.chat_id
-    user_details = db_session.query(Chat).filter(Chat.chatID == chatID).first() #Pull user's username from the DB
-    username = user_details.PID
+    user_details = get_user_info(chatID)
+    username = user_details['PID']
     logger.info("Deleting user credentials for {}!".format(username))
-    Chat.query.filter(Chat.chatID == chatID).delete() #Delete the user's record referenced by their ChatID
-    db_session.commit() #Save changes
+    Chat.query.filter(Chat.chatID == chatID).delete() # Delete the user's record referenced by their ChatID
+    db_session.commit()
     messageContent = "Your credentials have been deleted, {}\nHope to see you back soon.".format(username[3:-4].title())
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
+    
+    mp.track(username, 'User Left')
+    mp.people_set(username, {'active': False })
 
 
 def cancel(bot, update):
@@ -217,23 +230,32 @@ def tips(bot, update):
 
 def error_callback(bot, update, error):
     """Simple error handling function. Handles PTB lib errors"""
+    user = get_user_info(update.message.chat_id)
+    username = update.message.chat_id if user is None else user.PID
+
     try:
         raise error
     except Unauthorized:
         # remove update.message.chat_id from conversation list
+        mp.track(username, 'Error', {'type': 'Unauthorized' })
         logger.warning("TelegramError: Unauthorized user. User probably blocked the bot.")
     except BadRequest as br:
         # handle malformed requests
+        mp.track(username, 'Error', {'type': 'BadRequest', 'text': update.message.text, 'error': str(br) })
         logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(br), update.message.text, update.message.from_user))
     except TimedOut as time_out:
         # handle slow connection problems
+        mp.track(username, 'Error', {'type': 'TimedOut', 'text': update.message.text, 'error': str(time_out) })
         logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(time_out), update.message.text, update.message.from_user))
     except NetworkError as ne:
         # handle other connection problems
+        mp.track(username, 'Error', {'type': 'NetworkError', 'text': update.message.text, 'error': str(ne) })
         logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(ne), update.message.text, update.message.from_user))
     except ChatMigrated as cm:
         # the chat_id of a group has changed, use e.new_chat_id instead
+        mp.track(username, 'Error', {'type': 'ChatMigrated' })
         logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(cm), update.message.text, update.message.from_user))
     except TelegramError as e:
         # handle all other telegram related errors
+        mp.track(username, 'Error', {'type': 'TelegramError', 'text': update.message.text, 'error': str(e) })
         logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(e), update.message.text, update.message.from_user))

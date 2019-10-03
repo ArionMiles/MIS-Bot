@@ -11,6 +11,7 @@ from scraper.models import Lecture, Practical, Chat, Misc
 from scraper.items import Lectures, Practicals
 
 from misbot.mis_utils import until_x, crop_image
+from misbot.analytics import mp
 
 bot = Bot(environ['TOKEN'])
 
@@ -74,11 +75,14 @@ class AttendanceScreenshotPipeline(object):
                     bot.sendMessage(chat_id=spider.chatID, text=messageContent)
 
             remove('files/{}_attendance.png'.format(spider.username)) #Delete saved image
+            mp.track(spider.username, 'Attendance')
         except IOError:
-            bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
+            bot.sendMessage(chat_id=spider.chatID, text='The bot is experiencing some issues. Please try again later.')
             logger.warning("Attendance screenshot failed! Check if site is blocking us or if Splash is up.")
+            mp.track(spider.username, 'Error', {'type': 'Site down?' })
         except TelegramError as te:
             logger.warning("TelegramError: {}".format(str(te)))
+            mp.track(spider.username, 'Error', {'type': 'TelegramError', 'error': str(te) })
 
 class ItineraryScreenshotPipeline(object):
     def close_spider(self, spider):
@@ -86,11 +90,13 @@ class ItineraryScreenshotPipeline(object):
             with open("files/{}_itinerary.png".format(spider.username), "rb") as f:
                 pass
         except IOError:
-            bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
+            bot.sendMessage(chat_id=spider.chatID, text='The bot is experiencing some issues. Please try again later.')
             logger.warning("Itinerary screenshot failed! Check if site is blocking us or if Splash is up.")
+            mp.track(spider.username, 'Error', {'type': 'Site down?' })
             return
         except TelegramError as te:
             logger.warning("TelegramError: {}".format(str(te)))
+            mp.track(spider.username, 'Error', {'type': 'TelegramError', 'error': str(te) })
             return
 
         if spider.uncropped:
@@ -99,9 +105,12 @@ class ItineraryScreenshotPipeline(object):
                 bot.send_document(chat_id=spider.chatID, document=open("files/{}_itinerary.png".format(spider.username), 'rb'),
                                 caption='Full Itinerary Report for {}'.format(spider.username))
                 remove('files/{}_itinerary.png'.format(spider.username)) #Delete original downloaded image
+                mp.track(spider.username, 'Itinerary', {'cropped': False })
                 return
             except TelegramError as te:
                 logger.warning("TelegramError: {}".format(str(te)))
+                mp.track(spider.username, 'Error', {'type': 'TelegramError', 'error': str(te) })
+                return
 
         try:
             if crop_image("files/{}_itinerary.png".format(spider.username)):
@@ -115,8 +124,10 @@ class ItineraryScreenshotPipeline(object):
                 bot.send_photo(chat_id=spider.chatID, photo=open("files/{}_itinerary.png".format(spider.username), 'rb'),
                             caption='Itinerary Report for {}'.format(spider.username))
                 remove('files/{}_itinerary.png'.format(spider.username)) #Delete original downloaded image
+            mp.track(spider.username, 'Itinerary', {'cropped': True })
         except TelegramError as te:
             logger.warning("TelegramError: {}".format(str(te)))
+            mp.track(spider.username, 'Error', {'type': 'TelegramError', 'error': str(te) })
 
 class ResultsScreenshotPipeline(object):
     def close_spider(self, spider):
@@ -124,11 +135,14 @@ class ResultsScreenshotPipeline(object):
             bot.send_photo(chat_id=spider.chatID, photo=open("files/{}_tests.png".format(spider.username), 'rb'),
                         caption='Test Report for {}'.format(spider.username))
             remove('files/{}_tests.png'.format(spider.username)) #Delete saved image
+            mp.track(spider.username, 'Results')
         except IOError:
-            bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
+            bot.sendMessage(chat_id=spider.chatID, text='The bot is experiencing some issues. Please try again later.')
             logger.warning("Results screenshot failed! Check if site is blocking us or if Splash is up.")
+            mp.track(spider.username, 'Error', {'type': 'Site down?' })
         except TelegramError as te:
             logger.warning("TelegramError: {}".format(str(te)))
+            mp.track(spider.username, 'Error', {'type': 'TelegramError', 'error': str(te) })
 
 class ProfileScreenshotPipeline(object):
     def close_spider(self, spider):
@@ -136,8 +150,11 @@ class ProfileScreenshotPipeline(object):
             bot.send_document(chat_id=spider.chatID, document=open("files/{}_profile.png".format(spider.username), 'rb'),
                             caption='Student profile for {}'.format(spider.username))
             remove('files/{}_profile.png'.format(spider.username)) #Delete saved image
+            mp.track(spider.username, 'Profile')
         except IOError:
-            bot.sendMessage(chat_id=spider.chatID, text='There were some errors.')
+            bot.sendMessage(chat_id=spider.chatID, text='The bot is experiencing some issues. Please try again later.')
             logger.warning("Profile screenshot failed! Check if site is blocking us or if Splash is up.")
+            mp.track(spider.username, 'Error', {'type': 'Site down?' })
         except TelegramError as te:
             logger.warning("TelegramError: {}".format(str(te)))
+            mp.track(spider.username, 'Error', {'type': 'TelegramError', 'error': str(te) })

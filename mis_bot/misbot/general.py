@@ -224,16 +224,16 @@ def error_callback(bot, update, error):
         logger.warning("TelegramError: Unauthorized user. User probably blocked the bot.")
     except BadRequest as br:
         # handle malformed requests
-        logger.warning("TelegramError: {} | Text: {}".format(str(br), update.message.text))
+        logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(br), update.message.text, update.message.from_user))
     except TimedOut as time_out:
         # handle slow connection problems
-        logger.warning("TelegramError: {} | Text: {}".format(str(time_out), update.message.text))
+        logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(time_out), update.message.text, update.message.from_user))
     except NetworkError as ne:
         # handle other connection problems
-        logger.warning("TelegramError: {} | Text: {}".format(str(ne), update.message.text))
+        logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(ne), update.message.text, update.message.from_user))
     except ChatMigrated as cm:
         # the chat_id of a group has changed, use e.new_chat_id instead
-        logger.warning("TelegramError: {} | Text: {}".format(str(cm), update.message.text))
+        logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(cm), update.message.text, update.message.from_user))
     except TelegramError as e:
         # handle all other telegram related errors
-        logger.warning("TelegramError: {} | Text: {}".format(str(e), update.message.text))
+        logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(e), update.message.text, update.message.from_user))

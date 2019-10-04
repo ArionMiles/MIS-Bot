@@ -56,8 +56,16 @@ def bunk_choose(bot, update, user_data):
     :return: ConversationHandler.END if no records else INPUT
     :rtype: int
     """
-    user_data['type'] = update.message.text
     chat_id = update.message.chat_id
+    
+    if update.message.text == "Lectures":
+        user_data['type'] = "Lectures"
+    elif update.message.text == "Practicals":
+        user_data['type'] = "Practicals"
+    else:
+        bot.sendMessage(chat_id=chat_id, text="Please choose out of the two options.")
+        return
+
     stype = user_data['type']
     reply_markup = ReplyKeyboardRemove()
     reply_text = "{}\nChoose `Cancel` to exit.".format(stype)

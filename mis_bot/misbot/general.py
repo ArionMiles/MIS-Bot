@@ -231,7 +231,7 @@ def tips(bot, update):
 def error_callback(bot, update, error):
     """Simple error handling function. Handles PTB lib errors"""
     user = get_user_info(update.message.chat_id)
-    username = update.message.chat_id if user is None else user.PID
+    username = update.message.chat_id if user is None else user['PID']
 
     try:
         raise error

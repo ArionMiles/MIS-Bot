@@ -123,8 +123,8 @@ def check_parent_login(username, dob):
 
     with requests.session() as s:
         r = s.get(base_url)
-        session_id = str(r.cookies.get('PHPSESSID')) #Get SessionID
-        captcha_answer = solve_captcha(session_id) #Solve the CAPTCHA
+        session_id = str(r.cookies.get('PHPSESSID'))
+        captcha_answer = solve_captcha(session_id)
         payload = {
             'studentid':username,
             'date_of_birth': date,

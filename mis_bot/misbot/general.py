@@ -85,10 +85,10 @@ def credentials(bot, update, user_data):
     Finally, sends message asking users to enter DOB and gives control to :func:`parent_login` after
     storing ``Student_ID`` (PID) in user_data dict.
     """
-    chatID = update.message.chat_id
+    chat_id = update.message.chat_id
     # If message contains less or more than 2 arguments, send message and stop.
     try:
-        Student_ID, passwd = update.message.text.split()
+        Student_ID, password = update.message.text.split()
     except ValueError:
         messageContent = textwrap.dedent("""
         Oops, you made a mistake! 
@@ -96,11 +96,11 @@ def credentials(bot, update, user_data):
         This is what valid login credentials look like:
         `123name4567 password`
         """)
-        bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
+        bot.send_chat_action(chat_id=chat_id, action='typing')
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
         return
 
-    if not check_login(Student_ID, passwd):
+    if not check_login(Student_ID, password):
         messageContent = textwrap.dedent("""
         Looks like your credentials are incorrect! Give it one more shot.
         This is what valid login credentials look like:
@@ -112,7 +112,7 @@ def credentials(bot, update, user_data):
     # Create an object of Class <Chat> and store Student_ID, password, and Telegram
     # User ID, Add it to the database, commit it to the database.
 
-    userChat = Chat(PID=Student_ID, password=passwd, chatID=chatID)
+    userChat = Chat(PID=Student_ID, password=password, chatID=chat_id)
     db_session.add(userChat)
     db_session.commit()
 

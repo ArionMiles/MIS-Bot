@@ -1,3 +1,4 @@
+from os import environ
 import logging
 import random
 import textwrap
@@ -6,18 +7,20 @@ from telegram.ext import ConversationHandler
 from telegram.error import TelegramError, Unauthorized, BadRequest, TimedOut, ChatMigrated, NetworkError
 from sqlalchemy import and_
 
-from scraper.models import Chat
+from scraper.models import Chat, Misc
 from scraper.database import db_session
 from misbot.mis_utils import check_login, check_parent_login, get_user_info
 from misbot.decorators import signed_up
 from misbot.states import CREDENTIALS, PARENT_LGN
 from misbot.analytics import mp
+from misbot.message_strings import SUBSCRIPTION_MSG
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
 
 def start(bot, update):
     """Initial message sent to all users.
@@ -171,12 +174,12 @@ def parent_login(bot, update, user_data):
 def delete(bot, update):
     """Delete a user's credentials if they wish to stop using the bot or update them."""
     chatID = update.message.chat_id
-    user_details = get_user_info(chatID)
-    username = user_details['PID']
+    username = get_user_info(chatID)['PID']
     logger.info("Deleting user credentials for {}!".format(username))
     Chat.query.filter(Chat.chatID == chatID).delete() # Delete the user's record referenced by their ChatID
+    Misc.query.filter(Misc.chatID == chatID).delete()
     db_session.commit()
-    messageContent = "Your credentials have been deleted, {}\nHope to see you back soon.".format(username[3:-4].title())
+    messageContent = "Your credentials have been deleted, {}\nHope to see you back soon!".format(username[3:-4].title())
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
     
     mp.track(username, 'User Left')
@@ -259,3 +262,12 @@ def error_callback(bot, update, error):
         # handle all other telegram related errors
         mp.track(username, 'Error', {'type': 'TelegramError', 'text': update.message.text, 'error': str(e) })
         logger.warning("TelegramError: {} | Text: {} | From: {}".format(str(e), update.message.text, update.message.from_user))
+
+@signed_up
+def subscription(bot, update):
+    """Sends text detailing the subscription model"""
+    chat_id = update.message.chat_id
+
+    message_content = SUBSCRIPTION_MSG.format(environ['PAYMENT_LINK'])
+    bot.sendMessage(chat_id=chat_id, text=message_content, parse_mode='markdown', 
+                    disable_web_page_preview=True)

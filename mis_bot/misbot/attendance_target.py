@@ -6,19 +6,19 @@ from telegram.ext import ConversationHandler
 
 from scraper.models import Misc
 from scraper.database import db_session
-from misbot.decorators import signed_up
+from misbot.decorators import signed_up, premium
 from misbot.states import SELECT_YN, INPUT_TARGET, UPDATE_TARGET
-from misbot.mis_utils import until_x, get_user_info
+from misbot.mis_utils import until_x, get_user_info, get_misc_record
 from misbot.analytics import mp
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
-
 logger = logging.getLogger(__name__)
 
 
 @signed_up
+@premium(tier=1)
 def attendance_target(bot, update):
     """Like :func:`until_eighty`, but with user specified target attendance percentage
     which is stored in the ``Misc`` table.
@@ -35,20 +35,11 @@ def attendance_target(bot, update):
 
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
 
-    student_misc = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
-    
-    if student_misc is None:
-        new_misc_record = Misc(chatID=update.message.chat_id)
-        db_session.add(new_misc_record)
-        db_session.commit()
-        username = get_user_info(update.message.chat_id)['PID']
-        logger.info("Created new Misc record for {}".format(username))
-        student_misc = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
+    student_misc = get_misc_record(update.message.chat_id)
     
     target = student_misc.attendance_target
     
     if target is None:
-
         messageContent = textwrap.dedent("""
         You have not set a target yet. Would you like to set it now?
         You can change it anytime using /edit_target
@@ -132,6 +123,7 @@ def input_target(bot, update):
 
 
 @signed_up
+@premium(tier=1)
 def edit_attendance_target(bot, update):
     """Edit existing attendance target. Shows current target and transfers
     control to :py:func:`update_target`
@@ -143,7 +135,7 @@ def edit_attendance_target(bot, update):
     :return: UPDATE_TARGET
     :rtype: int
     """    
-    student_misc_model = Misc.query.filter(Misc.chatID == update.message.chat_id).first()
+    student_misc_model = get_misc_record(update.message.chat_id)
     messageContent = "You do not have any target records. To create one, use /target"
     if student_misc_model is None:
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
@@ -191,7 +183,7 @@ def update_target(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text="You must send a number between 1-99.")
         return
 
-    old_target = Misc.query.filter(Misc.chatID == update.message.chat_id).first().attendance_target
+    old_target = get_misc_record(update.message.chat_id).attendance_target
     db_session.query(Misc).filter(Misc.chatID == update.message.chat_id).update({'attendance_target': new_target})
     db_session.commit()
     username = get_user_info(update.message.chat_id)['PID']

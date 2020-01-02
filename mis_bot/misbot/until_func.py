@@ -1,9 +1,10 @@
 import textwrap
 
-from misbot.decorators import signed_up
+from misbot.decorators import signed_up, premium
 from misbot.mis_utils import until_x
 
 @signed_up
+@premium(tier=1)
 def until_eighty(bot, update):
     """Calculate number of lectures you must consecutively attend before you attendance is 80%
     
@@ -23,6 +24,7 @@ def until_eighty(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 @signed_up
+@premium(tier=1)
 def until(bot, update, args):
     """Like :py:func:`until_eighty` but user supplies the number.
 

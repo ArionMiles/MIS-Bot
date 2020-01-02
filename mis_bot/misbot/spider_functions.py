@@ -9,16 +9,17 @@ from scraper.spiders.itinerary_spider import scrape_itinerary
 from scraper.spiders.profile_spider import scrape_profile
 from scraper.models import Chat, RateLimit
 from scraper.database import db_session
-from misbot.decorators import signed_up
+from misbot.decorators import signed_up, premium
 from misbot.mis_utils import until_x, crop_image, get_user_info, rate_limited
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
-
 logger = logging.getLogger(__name__)
 
+
 @signed_up
+@premium(tier=1)
 def attendance(bot, update):
     """Core function. Fetch attendance figures from Aldel's MIS.
     Runs AttendanceSpider for registered users and passes it their ``Student_ID`` (PID),
@@ -45,6 +46,7 @@ def attendance(bot, update):
     
 
 @signed_up
+@premium(tier=1)
 def results(bot, update):
     """Fetch Unit Test results from the Aldel MIS.
     Core function. Fetch Test Reports from Aldel's MIS.
@@ -73,6 +75,7 @@ def results(bot, update):
 
 
 @signed_up
+@premium(tier=1)
 def itinerary(bot, update, args):
     """Core function. Fetch detailed attendance reports from Aldel's MIS (Parent's Portal).
     Runs ``ItinerarySpider`` for registered users and passes it their ``Student_ID`` (PID) &
@@ -114,7 +117,9 @@ def itinerary(bot, update, args):
             scrape_itinerary(Student_ID, DOB, chatID)
             return
 
+
 @signed_up
+@premium(tier=1)
 def profile(bot, update):
     """Fetch profile info from the Aldel MIS. Core function.
     Runs ``ProfileSpider`` for registered users and passes it their ``Student_ID`` (PID) &

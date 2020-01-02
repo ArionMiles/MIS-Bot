@@ -6,11 +6,12 @@ from telegram.ext import ConversationHandler
 from scraper.models import Lecture, Practical
 from scraper.database import db_session
 from misbot.mis_utils import bunk_lecture, get_subject_name, build_menu, get_user_info
-from misbot.decorators import signed_up
+from misbot.decorators import signed_up, premium
 from misbot.states import CHOOSING, INPUT, CALCULATING
 from misbot.analytics import mp
 
 @signed_up
+@premium(tier=1)
 def bunk(bot, update):
     """
     Starting point of bunk_handler.

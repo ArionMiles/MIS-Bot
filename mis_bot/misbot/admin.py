@@ -1,4 +1,6 @@
 import textwrap
+from datetime import datetime, timedelta
+from random import randint
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler
@@ -6,9 +8,9 @@ from sqlalchemy import and_
 
 from misbot.decorators import admin
 from misbot.push_notifications import push_message_threaded, delete_threaded, get_user_list
-from misbot.states import NOTIF_MESSAGE, NOTIF_CONFIRM, ASK_UUID, CONFIRM_REVERT
-from misbot.mis_utils import clean_attendance_records
-from scraper.models import PushMessage, PushNotification
+from misbot.states import *
+from misbot.mis_utils import clean_attendance_records, build_menu, get_misc_record
+from scraper.models import PushMessage, PushNotification, Misc, Chat
 from scraper.database import db_session
 
 @admin
@@ -178,3 +180,92 @@ def clean_all_attendance_records(bot, update):
     lectures, practicals = clean_attendance_records()
     message_content = "{} Lecture and {} Practical records cleared.".format(lectures, practicals)
     update.message.reply_text(message_content)
+
+@admin
+def make_premium(bot, update):
+    bot.sendMessage(chat_id=update.message.chat_id, text="Please send the username!")
+    return ASK_USERNAME
+
+def ask_username(bot, update, user_data):
+    user_data['username'] = update.message.text
+    user_records = Chat.query.filter(Chat.PID == user_data['username']).all()
+    messageContent = "Records of student {}\n".format(user_data['username'])
+    for index, user in enumerate(user_records):
+        chat_id = user.chatID
+        messageContent += "{index}. {chat_id}\n".format(index=index+1, chat_id=chat_id)
+
+    keyboard = build_menu(user_records, 3, footer_buttons='Cancel')
+    reply_markup = ReplyKeyboardMarkup(keyboard)
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
+    return CONFIRM_USER
+
+def confirm_user(bot, update, user_data):
+    reply_markup = ReplyKeyboardRemove()
+    if update.message.text == "Cancel":
+        bot.sendMessage(chat_id=update.message.chat_id, text="Operation cancelled! 😊", reply_markup=reply_markup)
+        return ConversationHandler.END
+    
+    try:
+        user_data['index'] = int(update.message.text) - 1 # Zero-based indexing
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Please select a number from the menu.")
+        return
+
+    bot.sendMessage(chat_id=update.message.chat_id, text="What's the subscription tier for this user?", reply_markup=reply_markup)
+    return INPUT_TIER
+
+def input_tier(bot, update, user_data):
+    try:
+        user_data['tier'] = int(update.message.text)
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Please send a number.")
+        return
+
+    bot.sendMessage(chat_id=update.message.chat_id, text="This user is premium for how many days?")
+    return INPUT_VALIDITY
+
+def input_validity(bot, update, user_data):
+    try:
+        user_data['validity_days'] = int(update.message.text)
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Please send a number.")
+        return
+    
+    try:
+        user_data['user_record'] = Chat.query.filter(Chat.PID == user_data['username'])[user_data['index']]
+    except IndexError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="The selected user does not exist! Bye!")
+        return ConversationHandler.END
+
+    otp = randint(1111, 9999)
+    otp_message_user = "Your OTP is *{}*. Kindly share it with the administrator.".format(otp)
+    otp_message_admin = "The OTP is *{}*. Confirm with the user.".format(otp)
+
+    bot.sendMessage(chat_id=user_data['user_record'].chatID, text=otp_message_user, parse_mode='markdown')
+
+    keyboard = [["Confirm"], ["Abort"]]
+    reply_markup = ReplyKeyboardMarkup(keyboard)
+    bot.sendMessage(chat_id=update.message.chat_id, text=otp_message_admin, reply_markup=reply_markup, parse_mode='markdown')
+    return CONFIRM_OTP
+
+def confirm_otp(bot, update, user_data):
+    reply_markup = ReplyKeyboardRemove()
+    admin_response = update.message.text
+    if admin_response == "Confirm":
+        pass
+    elif admin_response == "Abort":
+        bot.sendMessage(chat_id=update.message.chat_id, text="Operation Aborted!", reply_markup=reply_markup)
+        return ConversationHandler.END
+    else:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Choose one of the two options.")
+        return
+    
+    misc_record = get_misc_record(user_data['user_record'].chatID)
+    misc_record.premium_user = True
+    misc_record.premium_tier = user_data['tier']
+    misc_record.premium_till = datetime.now() + timedelta(days=user_data['validity_days'])
+    db_session.commit()
+
+    messageContent = "{} has been elevated to premium!".format(user_data['username'])
+    bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
+    return ConversationHandler.END

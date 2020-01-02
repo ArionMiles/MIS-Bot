@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 import logging
-import textwrap
-import random
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 from dotenv import load_dotenv
@@ -10,12 +8,13 @@ from dotenv import load_dotenv
 load_dotenv(verbose=True)
 
 from misbot.admin import (push_notification, notification_message, notification_confirm, revert_notification,
-                        ask_uuid, confirm_revert, clean_all_attendance_records)
+                        ask_uuid, confirm_revert, clean_all_attendance_records, make_premium, ask_username,
+                        confirm_user, input_tier, input_validity, confirm_otp)
 from misbot.attendance_target import attendance_target, select_yn, input_target, edit_attendance_target, update_target
 from misbot.bunk import bunk, bunk_choose, bunk_input, bunk_calc
 from misbot.decorators import signed_up, admin
 from misbot.general import (start, register, credentials, parent_login, delete, cancel, unknown, help_text, 
-                            tips, error_callback)
+                            tips, error_callback, subscription)
 from misbot.mis_utils import bunk_lecture, until_x, check_login, check_parent_login, crop_image
 from misbot.push_notifications import push_message_threaded, get_user_list, delete_threaded
 from misbot.spider_functions import attendance, results, itinerary, profile
@@ -103,6 +102,21 @@ def main():
 
         fallbacks=[CommandHandler('cancel', cancel)]
     )
+    
+    make_premium_handler = ConversationHandler(
+        entry_points=[CommandHandler('elevate', make_premium)],
+
+        states = {
+            ASK_USERNAME: [MessageHandler(Filters.regex(r'^\d{3}\w+\d{4}$'), ask_username, pass_user_data=True)],
+            CONFIRM_USER: [MessageHandler(Filters.text, confirm_user, pass_user_data=True)],
+            INPUT_TIER: [MessageHandler(Filters.text, input_tier, pass_user_data=True)],
+            INPUT_VALIDITY: [MessageHandler(Filters.text, input_validity, pass_user_data=True)],
+            CONFIRM_OTP: [MessageHandler(Filters.text, confirm_otp, pass_user_data=True)]
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel)]
+    
+    )
 
     clean_records_handler = CommandHandler('clean', clean_all_attendance_records)
 
@@ -115,9 +129,12 @@ def main():
     delete_handler = CommandHandler('delete', delete)
     help_handler = CommandHandler('help', help_text)
     tips_handler = CommandHandler('tips', tips)
+    subscription_handler = CommandHandler('subscription', subscription)
     unknown_message = MessageHandler(Filters.text | Filters.command, unknown)
 
     # Dispatchers
+
+    # User Commands
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(delete_handler)
     dispatcher.add_handler(attendance_handler)
@@ -131,9 +148,15 @@ def main():
     dispatcher.add_handler(edit_attendance_target_handler)
     dispatcher.add_handler(help_handler)
     dispatcher.add_handler(tips_handler)
+    dispatcher.add_handler(subscription_handler)
+
+    # Admin Commands
     dispatcher.add_handler(push_notification_handler)
     dispatcher.add_handler(delete_notification_handler)
+    dispatcher.add_handler(make_premium_handler)
     dispatcher.add_handler(clean_records_handler)
+    
+    # Miscellaneous
     dispatcher.add_handler(unknown_message)
     dispatcher.add_error_handler(error_callback)
 

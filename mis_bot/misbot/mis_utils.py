@@ -12,7 +12,7 @@ from sqlalchemy import and_
 from securimage_solver import CaptchaApi
 
 from scraper.database import db_session
-from scraper.models import Chat, Lecture, Practical, RateLimit
+from scraper.models import Chat, Lecture, Practical, RateLimit, Misc
 
 SECURIMAGE_ENDPOINT = "http://report.aldel.org/securimage/securimage_show.php"
 
@@ -291,3 +291,18 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     if footer_buttons:
         menu.append([footer_buttons])
     return menu
+
+def get_misc_record(chat_id):
+    """Returns Misc record for a user
+    
+    :param chat_id: 9-Digit unique user ID
+    :type chat_id: str
+    """
+    misc_record = Misc.query.filter(Misc.chatID == chat_id).first()
+    
+    if misc_record is None:
+        new_misc_record = Misc(chatID=chat_id)
+        db_session.add(new_misc_record)
+        db_session.commit()
+        misc_record = Misc.query.filter(Misc.chatID == chat_id).first()
+    return misc_record

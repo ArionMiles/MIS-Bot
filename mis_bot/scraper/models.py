@@ -63,12 +63,18 @@ class Misc(Base):
     id = Column(Integer, primary_key=True)
     chatID = Column(String(512))
     attendance_target = Column(Float)
+    premium_user = Column(Boolean, default=False)
+    premium_tier = Column(Integer, default=0)
+    premium_till = Column(DateTime, default=None)
 
-    def __init__(self, chatID=chatID, attendance_target=None):
+    def __init__(self, chatID=chatID, attendance_target=None, premium_user=False, premium_tier=0, premium_till=None):
         self.chatID = chatID
         self.attendance_target = attendance_target
+        self.premium_user = premium_user
+        self.premium_tier = premium_tier
+        self.premium_till = premium_till
     
-    def __repr(self):
+    def __repr__(self):
         return '<Misc chatID: {}>'.format(self.chatId)
 
 

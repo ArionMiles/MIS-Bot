@@ -266,6 +266,67 @@ def confirm_otp(bot, update, user_data):
     misc_record.premium_till = datetime.now() + timedelta(days=user_data['validity_days'])
     db_session.commit()
 
-    messageContent = "{} has been elevated to premium!".format(user_data['username'])
+    date_beautified = misc_record.premium_till.stftime("%B %d, %Y")
+
+    message_content = "Your premium subscription is active and valid till: {}!".format(date_beautified)
+    bot.sendMessage(chat_id=user_data['user_record'].chatID, text=message_content)
+
+    admin_message = "{} has been elevated to premium!\n Valid till: {}".format(user_data['username'], date_beautified)
+    bot.sendMessage(chat_id=update.message.chat_id, text=admin_message, reply_markup=reply_markup)
+    return ConversationHandler.END
+
+
+@admin
+def extend_premium(bot, update):
+    bot.sendMessage(chat_id=update.message.chat_id, text="Please send the username!")
+    return EXTEND_ASK_USERNAME
+
+def extend_ask_username(bot, update, user_data):
+    user_data['username'] = update.message.text
+    user_records = Chat.query.filter(Chat.PID == user_data['username']).all()
+    messageContent = "Records of student {}\n".format(user_data['username'])
+    for index, user in enumerate(user_records):
+        chat_id = user.chatID
+        messageContent += "{index}. {chat_id}\n".format(index=index+1, chat_id=chat_id)
+
+    keyboard = build_menu(user_records, 3, footer_buttons='Cancel')
+    reply_markup = ReplyKeyboardMarkup(keyboard)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, reply_markup=reply_markup)
+    return EXTEND_CONFIRM_USER
+
+
+def extend_confirm_user(bot, update, user_data):
+    reply_markup = ReplyKeyboardRemove()
+    if update.message.text == "Cancel":
+        bot.sendMessage(chat_id=update.message.chat_id, text="Operation cancelled! 😊", reply_markup=reply_markup)
+        return ConversationHandler.END
+    
+    try:
+        user_data['index'] = int(update.message.text) - 1 # Zero-based indexing
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Please select a number from the menu.")
+        return
+
+    bot.sendMessage(chat_id=update.message.chat_id, text="Extend this user's premium by how many days?", reply_markup=reply_markup)
+    return EXTEND_INPUT_DAYS
+
+
+def extend_input_days(bot, update, user_data):
+    try:
+        user_data['extension_period'] = int(update.message.text)
+    except ValueError:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Please send a number.")
+        return
+    user_record = Chat.query.filter(Chat.PID == user_data['username'])[user_data['index']]
+    misc_record = get_misc_record(user_record.chatID)
+    misc_record.premium_till += timedelta(days=user_data['extension_period'])
+    db_session.commit()
+
+    date_beautified = misc_record.premium_till.strftime("%B %d, %Y")
+    message_content = "Your subscription has been extended till {}. Cheers!".format(date_beautified)
+    bot.sendMessage(chat_id=user_record.chatID, text=message_content)
+    admin_message = "Subscription for {} extended by {} day(s) ({})".format(user_record.PID, 
+                                                                    user_data['extension_period'],
+                                                                    date_beautified)
+    bot.sendMessage(chat_id=update.message.chat_id, text=admin_message)
     return ConversationHandler.END

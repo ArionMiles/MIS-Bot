@@ -10,8 +10,10 @@ from misbot.decorators import admin
 from misbot.push_notifications import push_message_threaded, delete_threaded, get_user_list
 from misbot.states import *
 from misbot.mis_utils import clean_attendance_records, build_menu, get_misc_record
+from misbot.message_strings import ADMIN_COMMANDS_TXT
 from scraper.models import PushMessage, PushNotification, Misc, Chat
 from scraper.database import db_session
+
 
 @admin
 def push_notification(bot, update):
@@ -266,7 +268,7 @@ def confirm_otp(bot, update, user_data):
     misc_record.premium_till = datetime.now() + timedelta(days=user_data['validity_days'])
     db_session.commit()
 
-    date_beautified = misc_record.premium_till.stftime("%B %d, %Y")
+    date_beautified = misc_record.premium_till.strftime("%B %d, %Y")
 
     message_content = "Your premium subscription is active and valid till: {}!".format(date_beautified)
     bot.sendMessage(chat_id=user_data['user_record'].chatID, text=message_content)
@@ -330,3 +332,7 @@ def extend_input_days(bot, update, user_data):
                                                                     date_beautified)
     bot.sendMessage(chat_id=update.message.chat_id, text=admin_message)
     return ConversationHandler.END
+
+@admin
+def admin_commands_list(bot, update):
+    bot.sendMessage(chat_id=update.message.chat_id, text=ADMIN_COMMANDS_TXT)

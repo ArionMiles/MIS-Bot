@@ -267,7 +267,5 @@ def error_callback(bot, update, error):
 def subscription(bot, update):
     """Sends text detailing the subscription model"""
     chat_id = update.message.chat_id
-
-    message_content = SUBSCRIPTION_MSG.format(environ['PAYMENT_LINK'])
-    bot.sendMessage(chat_id=chat_id, text=message_content, parse_mode='markdown', 
+    bot.sendMessage(chat_id=chat_id, text=SUBSCRIPTION_MSG, parse_mode='markdown', 
                     disable_web_page_preview=True)

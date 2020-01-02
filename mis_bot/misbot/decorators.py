@@ -81,7 +81,7 @@ def premium(tier=1):
             misc_record = get_misc_record(chat_id)
 
             if misc_record.premium_user is False:
-                messageContent = "You must upgrade to /premium to use this feature."
+                messageContent = "You must upgrade to premium to use this feature. See /subscription"
                 bot.sendMessage(chat_id=chat_id, text=messageContent)
                 return
             

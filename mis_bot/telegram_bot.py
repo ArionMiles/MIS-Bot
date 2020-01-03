@@ -10,7 +10,7 @@ load_dotenv(verbose=True)
 from misbot.admin import (push_notification, notification_message, notification_confirm, revert_notification,
                         ask_uuid, confirm_revert, clean_all_attendance_records, make_premium, ask_username,
                         confirm_user, input_tier, input_validity, confirm_otp, extend_premium, extend_ask_username,
-                        extend_confirm_user, extend_input_days)
+                        extend_confirm_user, extend_input_days, admin_commands_list)
 from misbot.attendance_target import attendance_target, select_yn, input_target, edit_attendance_target, update_target
 from misbot.bunk import bunk, bunk_choose, bunk_input, bunk_calc
 from misbot.decorators import signed_up, admin
@@ -132,6 +132,7 @@ def main():
     )
 
     clean_records_handler = CommandHandler('clean', clean_all_attendance_records)
+    admin_cmds_handler = CommandHandler('admin', admin_commands_list)
 
     attendance_handler = CommandHandler('attendance', attendance)
     results_handler = CommandHandler('results', results)
@@ -169,6 +170,7 @@ def main():
     dispatcher.add_handler(make_premium_handler)
     dispatcher.add_handler(clean_records_handler)
     dispatcher.add_handler(extend_premium_handler)
+    dispatcher.add_handler(admin_cmds_handler)
     
     # Miscellaneous
     dispatcher.add_handler(unknown_message)

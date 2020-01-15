@@ -201,7 +201,7 @@ def unknown(bot, update):
 
 def help_text(bot, update):
     """Display help text."""
-    bot.sendMessage(chat_id=update.message.chat_id, text=HELP, parse_mode='markdown')
+    bot.sendMessage(chat_id=update.message.chat_id, text=HELP)
 
 
 def tips(bot, update):

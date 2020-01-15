@@ -269,3 +269,5 @@ def subscription(bot, update):
     chat_id = update.message.chat_id
     bot.sendMessage(chat_id=chat_id, text=SUBSCRIPTION_MSG, parse_mode='markdown', 
                     disable_web_page_preview=True)
+    
+    mp.track(get_user_info(chat_id)['PID'], 'Checked Subscription')

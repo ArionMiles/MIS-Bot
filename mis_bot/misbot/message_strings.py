@@ -23,3 +23,45 @@ ADMIN_COMMANDS_TXT = textwrap.dedent("""
 4. /elevate - Make a user premium
 5. /extend - Extend a user's premium period
 """)
+
+REPLY_UNKNOWN = [
+    "Seems like I'm not programmed to understand this yet.", 
+    "I'm not a fully functional A.I. ya know?",
+    "The creator didn't prepare me for this.", 
+    "I'm not sentient...yet! 🤖", 
+    "Damn you're dumb.", 
+    "42",
+    "We cannot afford machine learning to make this bot smart!", 
+    "We don't use NLP.", 
+    "I really wish we had a neural network.",
+    "Sorry, did you say something? I wasn't listening.", 
+    ]
+
+TIPS = [
+    "Always use /attendance command before using /until80 or /bunk to get latest figures.",
+    "The Aldel MIS gets updated at 6PM everyday.", 
+    "The /until80 function gives you the number of lectures you must attend *consecutively* before you attendance is 80%.",\
+    "The bunk calculator's figures are subject to differ from actual values depending upon a number of factors such as:\
+    \nMIS not being updated.\
+    \nCancellation of lectures.\
+    \nMass bunks. 😝", 
+    "`/itinerary all` gives complete detailed attendance report since the start of semester."
+    ]
+
+HELP = textwrap.dedent("""
+    1. /register - Register yourself
+    2. /attendance - Fetch attendance from the MIS website
+    3. /itinerary - Fetch detailed attendance
+    4. /profile - See your student profile
+    5. /results - Fetch unit test results
+    6. /bunk - Calculate % \drop/rise
+    7. /until80 - No. of lectures to attend consecutively until total attendance is 80%
+    8. /until - No. of lectures until X%
+    9. /target - Set a attendance percentage target
+    10. /edit_target - Edit your attendance target
+    11. /cancel - Cancel registration
+    12. /delete - Delete your credentials
+    13. /help - See this help message
+    14. /tips - Random tips
+    15. /subscription - See subscription details
+    """)

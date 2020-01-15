@@ -13,7 +13,7 @@ from misbot.mis_utils import check_login, check_parent_login, get_user_info
 from misbot.decorators import signed_up
 from misbot.states import CREDENTIALS, PARENT_LGN
 from misbot.analytics import mp
-from misbot.message_strings import SUBSCRIPTION_MSG
+from misbot.message_strings import SUBSCRIPTION_MSG, REPLY_UNKNOWN, TIPS, HELP
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -194,41 +194,19 @@ def cancel(bot, update):
 
 def unknown(bot, update):
     """Respond to incomprehensible messages/commands with some canned responses."""
-    can = ["Seems like I'm not programmed to understand this yet.", "I'm not a fully functional A.I. ya know?",
-        "The creator didn't prepare me for this.", "I'm not sentient...yet! 🤖", "Damn you're dumb.", "42",
-        "We cannot afford machine learning to make this bot smart!", "We don't use NLP.", "I really wish we had a neural network.",
-        "You make me wish I had middle fingers.", "Sorry, did you say something? I wasn't listening.",
-        "Are you always such an idiot, or do you just like to show off here?", "Talk to the hand. ✋",]
-    messageContent = random.choice(can)
+    messageContent = random.choice(REPLY_UNKNOWN)
     bot.send_chat_action(chat_id=update.message.chat_id, action='typing')
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent)
 
 
 def help_text(bot, update):
     """Display help text."""
-    helpText = textwrap.dedent("""
-    1. /register - Register yourself
-    2. /attendance - Fetch attendance from the MIS website.
-    3. /itinerary - Fetch detailed attendance.
-    3. /results - Fetch unit test results
-    4. /bunk - Calculate % \drop/rise.
-    5. /until80 - No. of lectures to attend consecutively until total attendance is 80%
-    6. /cancel - Cancel registration.
-    7. /delete - Delete your credentials.
-    8. /tips - Random tips.
-    """)
-    bot.sendMessage(chat_id=update.message.chat_id, text=helpText, parse_mode='markdown')
+    bot.sendMessage(chat_id=update.message.chat_id, text=HELP, parse_mode='markdown')
 
 
 def tips(bot, update):
     """Send a random tip about the bot."""
-    tips = ["Always use /attendance command before using /until80 or /bunk to get latest figures.",\
-    "The Aldel MIS gets updated at 6PM everyday.", "The /until80 function gives you the number of lectures you must attend *consecutively* before you attendance is 80%.",\
-    "The bunk calculator's figures are subject to differ from actual values depending upon a number of factors such as:\
-    \nMIS not being updated.\
-    \nCancellation of lectures.\
-    \nMass bunks. 😝", "`/itinerary all` gives complete detailed attendance report since the start of semester."]
-    messageContent = random.choice(tips)
+    messageContent = random.choice(TIPS)
     bot.sendMessage(chat_id=update.message.chat_id, text=messageContent, parse_mode='markdown')
 
 def error_callback(bot, update, error):

@@ -13,17 +13,11 @@ from securimage_solver import CaptchaApi
 
 from scraper.database import db_session
 from scraper.models import Chat, Lecture, Practical, RateLimit, Misc
+from misbot.message_strings import GIFS
 
 SECURIMAGE_ENDPOINT = "http://report.aldel.org/securimage/securimage_show.php"
 
-list_of_gifs = ["https://media.giphy.com/media/uSJF1fS5c3fQA/giphy.gif",
-                "https://media.giphy.com/media/lRmjNrQZkKVuE/giphy.gif",
-                "https://media.giphy.com/media/1zSz5MVw4zKg0/giphy.gif",
-                "https://media.giphy.com/media/jWOLrt5JSNyXS/giphy.gif",
-                "https://media.giphy.com/media/27tE5WpzjK0QEEm0WC/giphy.gif",
-                "https://media.giphy.com/media/46itMIe0bkQeY/giphy.gif",
-                "https://i.imgur.com/CoWZ05t.gif",
-                "https://media.giphy.com/media/48YKCwrp4Kt8I/giphy.gif"]
+
 
 def bunk_lecture(n, tot_lec, chatID, stype, index):
     """Calculates % drop/rise if one chooses to bunk certain lectures. 
@@ -248,7 +242,7 @@ def rate_limited(bot, chat_id, command):
             RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command))\
                            .update({'count': rate_limit.count + 1})
             db_session.commit()
-            bot.send_animation(chat_id=chat_id, animation=random.choice(list_of_gifs))
+            bot.send_animation(chat_id=chat_id, animation=random.choice(GIFS))
             return True
     else:
         RateLimit.query.filter(and_(RateLimit.chatID == chat_id, RateLimit.command == command))\

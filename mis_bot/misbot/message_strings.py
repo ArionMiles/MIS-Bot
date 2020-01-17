@@ -68,3 +68,14 @@ HELP = textwrap.dedent("""
     14. /tips - Random tips
     15. /subscription - See subscription details
     """)
+
+GIFS = [
+    "https://media.giphy.com/media/uSJF1fS5c3fQA/giphy.gif",
+    "https://media.giphy.com/media/lRmjNrQZkKVuE/giphy.gif",
+    "https://media.giphy.com/media/1zSz5MVw4zKg0/giphy.gif",
+    "https://media.giphy.com/media/jWOLrt5JSNyXS/giphy.gif",
+    "https://media.giphy.com/media/27tE5WpzjK0QEEm0WC/giphy.gif",
+    "https://media.giphy.com/media/46itMIe0bkQeY/giphy.gif",
+    "https://i.imgur.com/CoWZ05t.gif",
+    "https://media.giphy.com/media/48YKCwrp4Kt8I/giphy.gif"
+    ]

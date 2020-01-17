@@ -9,12 +9,15 @@ There is a one-time fee of ₹50/- per semester.
 
 Payment is accepted via UPI. All UPI apps work (PayTM/PhonePe/GPay/etc.)
 
+*TIP:* If you sign up on Google Pay and enter my referral code *{}*, you get ₹21 back on your first payment, so you save money! 
+[Use this link](https://g.co/payinvite/{}) to signup using my referral code!
+
 To upgrade, make a payment at this link:
 [PAYMENT LINK]({})
 
 After payment, [send me a message](t.me/Arion_Miles) and 
 I'll upgrade you to premium after confirmation.
-""".format(environ['PAYMENT_LINK']))
+""".format(environ['GPAY_REFERRAL_CODE'], environ['GPAY_REFERRAL_CODE'], environ['PAYMENT_LINK']))
 
 ADMIN_COMMANDS_TXT = textwrap.dedent("""
 1. /push - Send a push notification

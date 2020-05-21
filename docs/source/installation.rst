@@ -47,19 +47,19 @@ However, if you're on Windows 10 Home edition, follow below steps.
 
 After installation is done run this command in the folder where you'll be downloading or cloning this repository (e.g. ``Documents``):
 .. code-block::
-   vagrant init kwilczynski/ubuntu-16.04-docker
-   vagrant up
+vagrant init kwilczynski/ubuntu-16.04-docker
+vagrant up
 
 A new ``Vagrantfile`` will be created inside the directory where you run the above command (``Documents`` in our case). 
 Open it and add this line before the last line (which says ``end``)
 .. code-block::
-   config.vm.synced_folder "MIS-Bot/", "/srv/MIS-Bot"
+config.vm.synced_folder "MIS-Bot/", "/srv/MIS-Bot"
 
 This will sync the cloned/downloaded project folder with the ubuntu virtual machine.
 
 Now you can run this command to get inside your Ubuntu VM with docker installed:
 .. code-block::
-   vagrant ssh
+vagrant ssh
 
 When you're done doing docker stuff, you can type ``exit`` to come out of the Ubuntu VM and then run ``vagrant halt`` to shutdown the VM.
 
@@ -71,12 +71,12 @@ Cloning the repository
 Clone the repository by running (in ``Documents`` or some other directory, whichever you created the vagrant VM in the previous step):
 
 .. code-block::
-   git clone https://github.com/ArionMiles/MIS-Bot/
+git clone https://github.com/ArionMiles/MIS-Bot/
 
 Open the project directory in terminal with
 
 .. code-block::
-   cd MIS-Bot/
+cd MIS-Bot/
 
 Run the below command to create folders which will be required by our bot:
 
@@ -123,7 +123,7 @@ If you enter an invalid FQDN (Fully Qualified Domain Name), you won't receive an
 
 Move the ``private.key`` and ``cert.pem`` generated to the ``files/`` directory so that they're picked up by ``telegram_bot.py``:
 .. code-block::
-   mv private.key cert.pem files/
+mv private.key cert.pem files/
 
 Running the docker container
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -133,7 +133,7 @@ internet connection, so wait while docker downloads the python, splash images an
 
 Start the container by running this from the root directory of the project:
 .. code-block::
-   docker-compose up
+docker-compose up
 
 and after everything is installed, the bot should be up.
 

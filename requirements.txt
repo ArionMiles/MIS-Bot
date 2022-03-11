@@ -4,7 +4,7 @@ scrapy-splash==0.7.2
 SQLAlchemy==1.3.0
 sympy==1.1.1
 requests==2.20.0
-Pillow==5.0.0
+Pillow==9.0.1
 python-dotenv==0.10.1
 https://github.com/sampritipanda/securimage_solver/archive/pip_package.zip
 SQLAlchemy-Utils==0.33.11
